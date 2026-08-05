@@ -29,9 +29,9 @@
 
 ## 文件
 
-- docs/api.md
-- docs/database.md
-- docs/architecture.md
+- [API 規劃](docs/api.md)
+- [資料庫設計](docs/database.md)
+- [系統架構圖](docs/architecture.md)
 
 ## 啟動專案
 
