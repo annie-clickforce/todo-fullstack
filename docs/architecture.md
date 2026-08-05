@@ -64,11 +64,11 @@ sequenceDiagram
 
 | 服務 | 用途 | 對外連接埠 |
 | --- | --- | --- |
-| `frontend` | 執行 Vue 3 開發伺服器 | `3000` |
-| `api` | 執行 Node.js REST API | `3001` |
+| `frontend` | 執行 Vue 3 開發伺服器 | `3010` |
+| `api` | 執行 Node.js REST API | `3011` |
 | `db` | 執行 PostgreSQL 與保存資料 | `5432` |
 
-API 在 Docker Compose 內透過 `db:5432` 連接 PostgreSQL；瀏覽器則透過 `localhost:3001` 呼叫 API。
+API 在 Docker Compose 內透過 `db:5432` 連接 PostgreSQL；瀏覽器則透過 `localhost:3011` 呼叫 API。
 
 ## 第一階段範圍
 

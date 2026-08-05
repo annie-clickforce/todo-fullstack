@@ -37,8 +37,8 @@
 
 1. 複製環境變數範本：`cp .env.example .env`
 2. 啟動服務：`docker compose up --build`
-3. 開啟前端：`http://localhost:3000`
-4. 確認 API 健康檢查：`http://localhost:3001/api/v1/health`
+3. 開啟前端：`http://localhost:3010`
+4. 確認 API 健康檢查：`http://localhost:3011/api/v1/health`
 
 停止服務時執行 `docker compose down`。若要連同 PostgreSQL 資料一併移除，執行 `docker compose down -v`。
 
