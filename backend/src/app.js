@@ -7,6 +7,13 @@ import pool from "./db.js";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PgSession = connectPgSimple(session);
 
+function requireAuth(request, response, next) {
+  if (!request.session.userId) {
+    return response.status(401).json({ message: "Unauthorized" });
+  }
+  next();
+}
+
 const app = express();
 
 app.use(express.json());
@@ -92,6 +99,16 @@ app.post("/api/v1/auth/login", async (request, response) => {
 
   const { password_hash: _passwordHash, ...userWithoutPassword } = user;
   response.json(userWithoutPassword);
+});
+
+app.get("/api/v1/auth/me", requireAuth, async (request, response) => {
+  const result = await pool.query(
+    `SELECT id, name, email, created_at AS "createdAt", updated_at AS "updatedAt"
+     FROM users
+     WHERE id = $1`,
+    [request.session.userId]
+  );
+  response.json(result.rows[0]);
 });
 
 app.get("/api/v1/todos", async (_request, response) => {
