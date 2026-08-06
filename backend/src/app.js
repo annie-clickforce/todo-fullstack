@@ -101,6 +101,16 @@ app.post("/api/v1/auth/login", async (request, response) => {
   response.json(userWithoutPassword);
 });
 
+app.post("/api/v1/auth/logout", requireAuth, (request, response) => {
+  request.session.destroy((error) => {
+    if (error) {
+      return response.status(500).json({ message: "Logout failed" });
+    }
+    response.clearCookie("connect.sid");
+    response.status(204).end();
+  });
+});
+
 app.get("/api/v1/auth/me", requireAuth, async (request, response) => {
   const result = await pool.query(
     `SELECT id, name, email, created_at AS "createdAt", updated_at AS "updatedAt"
