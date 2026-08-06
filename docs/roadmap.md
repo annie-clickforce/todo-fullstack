@@ -21,7 +21,7 @@
 
 6. ✅️ 依 [database.md](database.md) 的 `users` 資料表規格寫一支 migration（欄位：`id`、`name`、`email`、`password_hash`、`created_at`、`updated_at`）。
 7. ✅️ 寫一支 migration 幫 `todos` 加上 `user_id` 欄位（FK 參照 `users.id`，`ON DELETE CASCADE`），並補上索引 `todos(user_id, completed, created_at DESC)`。
-8. 後端加裝密碼雜湊套件（bcrypt 或 argon2），實作 `POST /auth/register`：驗證 `email` 唯一、密碼至少 8 碼，雜湊密碼後寫入 `users`，回傳 `201`。
+8. ✅️ 後端加裝密碼雜湊套件（bcrypt 或 argon2），實作 `POST /auth/register`：驗證 `email` 唯一、密碼至少 8 碼，雜湊密碼後寫入 `users`，回傳 `201`。
 9. 決定用 Session 還是 JWT 做登入狀態（先選一種做就好，不用兩個都做），實作 `POST /auth/login`：驗證帳密，設定 HTTP-only Cookie，回傳目前使用者資料；帳密錯誤回 `401`。
 10. 寫一支「需要登入」的 middleware，檢查 Cookie 是否有效，沒有就回 `401`；先掛在一個測試用路由確認 middleware 本身邏輯正確。
 11. 把 middleware 掛到所有 Todo 端點上，並把已完成的 `GET /api/v1/todos` 改成只用 `WHERE user_id = 目前登入的使用者`。
