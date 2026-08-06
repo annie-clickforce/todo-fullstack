@@ -1,12 +1,28 @@
 import express from "express";
+import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import bcrypt from "bcryptjs";
 import pool from "./db.js";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PgSession = connectPgSimple(session);
 
 const app = express();
 
 app.use(express.json());
+
+app.use(
+  session({
+    store: new PgSession({ pool, createTableIfMissing: true }),
+    secret: process.env.SESSION_SECRET ?? "dev-session-secret-change-me",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    },
+  })
+);
 
 app.get("/api/v1/health", (_request, response) => {
   response.json({ status: "ok" });
@@ -50,6 +66,32 @@ app.post("/api/v1/auth/register", async (request, response) => {
   );
 
   response.status(201).json(result.rows[0]);
+});
+
+app.post("/api/v1/auth/login", async (request, response) => {
+  const { email, password } = request.body ?? {};
+
+  if (typeof email !== "string" || typeof password !== "string") {
+    return response.status(401).json({ message: "Invalid email or password" });
+  }
+
+  const result = await pool.query(
+    `SELECT id, name, email, password_hash,
+            created_at AS "createdAt", updated_at AS "updatedAt"
+     FROM users
+     WHERE email = $1`,
+    [email.toLowerCase()]
+  );
+  const user = result.rows[0];
+
+  if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+    return response.status(401).json({ message: "Invalid email or password" });
+  }
+
+  request.session.userId = user.id;
+
+  const { password_hash: _passwordHash, ...userWithoutPassword } = user;
+  response.json(userWithoutPassword);
 });
 
 app.get("/api/v1/todos", async (_request, response) => {

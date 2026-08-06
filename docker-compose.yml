@@ -20,6 +20,7 @@ services:
     environment:
       PORT: 3011
       DATABASE_URL: postgresql://${POSTGRES_USER:-todo_app}:${POSTGRES_PASSWORD:-change-me}@db:5432/${POSTGRES_DB:-todo_app}
+      SESSION_SECRET: ${SESSION_SECRET:-dev-session-secret-change-me}
     volumes:
       - ./backend:/app
       - api_node_modules:/app/node_modules
