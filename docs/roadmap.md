@@ -11,9 +11,11 @@
 ## 第二階段：後端能讀寫資料庫
 
 4. ✅️ 後端加裝 `pg`（PostgreSQL client），寫一支簡單的連線設定，讀取 `DATABASE_URL` 環境變數。
-5. 先做一個端點：`GET /api/v1/todos`，回傳資料庫查詢結果（沒資料就回傳空陣列），確認 API 能連到 DB。
+5. ✅️ 先做一個端點：`GET /api/v1/todos`，回傳資料庫查詢結果（沒資料就回傳空陣列），確認 API 能連到 DB。
 6. 加上 `POST /api/v1/todos`（建立 Todo），用 curl 或 Postman 測試。
 7. 依序加上 `GET /api/v1/todos/:id`、`PATCH /api/v1/todos/:id`、`DELETE /api/v1/todos/:id`，一個一個做，每做完一個就手動測試。
+
+> **已知問題**：Windows 上 Docker 掛載的資料夾，檔案變更通知有時候傳不進容器，導致 `node --watch` 不會自動偵測到後端程式碼變更並重啟。改完 `backend/src` 的檔案後，如果打 API 發現行為沒變，先執行 `docker compose restart api` 再測試一次。
 
 ## 第三階段：前端串接
 
