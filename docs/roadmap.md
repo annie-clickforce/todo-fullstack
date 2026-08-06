@@ -17,7 +17,7 @@
 
 > **後續會回頭補的事**：`todos` 目前還沒有 `user_id`。第三階段會補一支 migration 加上這個欄位，並回頭把已完成的 `GET /api/v1/todos` 改成只回傳目前登入使用者的資料。
 
-## 第三階段：使用者認證（註冊、登入、登出）
+## ✅️ 第三階段：使用者認證（註冊、登入、登出）
 
 6. ✅️ 依 [database.md](database.md) 的 `users` 資料表規格寫一支 migration（欄位：`id`、`name`、`email`、`password_hash`、`created_at`、`updated_at`）。
 7. ✅️ 寫一支 migration 幫 `todos` 加上 `user_id` 欄位（FK 參照 `users.id`，`ON DELETE CASCADE`），並補上索引 `todos(user_id, completed, created_at DESC)`。
@@ -26,7 +26,7 @@
 10. ✅️ 寫一支「需要登入」的 middleware，檢查 Cookie 是否有效，沒有就回 `401`；先掛在一個測試用路由確認 middleware 本身邏輯正確。
 11. ✅️ 把 middleware 掛到所有 Todo 端點上，並把已完成的 `GET /api/v1/todos` 改成只用 `WHERE user_id = 目前登入的使用者`。
 12. ✅️ 實作 `POST /auth/logout`：清除認證 Cookie，回傳 `204`。
-13. 手動測試整條認證流程：註冊 → 登入 → 打 `GET /api/v1/todos` 確認能通 → 登出 → 再打一次確認回 `401`。
+13. ✅️ 手動測試整條認證流程：註冊 → 登入 → 打 `GET /api/v1/todos` 確認能通 → 登出 → 再打一次確認回 `401`。
 
 ## 第四階段：Todo CRUD 剩餘端點
 
