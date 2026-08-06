@@ -8,7 +8,7 @@
 
 - 前後端分離：Vue 3 前端透過 REST API 與 Node.js 後端溝通。
 - 使用 PostgreSQL 保存應用程式資料。
-- 提供註冊、登入、登出、忘記密碼與 Todo CRUD。
+- 提供註冊、登入、登出與 Todo CRUD。
 - 維護 API 文件、Markdown 文件與 Mermaid 架構圖。
 - 以 Docker Compose 啟動前端、後端與資料庫服務。
 
@@ -24,7 +24,6 @@
 - 註冊
 - 登入
 - 登出
-- 忘記密碼
 - Todo CRUD
 
 ## 文件
@@ -32,6 +31,7 @@
 - [API 規劃](docs/api.md)
 - [資料庫設計](docs/database.md)
 - [系統架構圖](docs/architecture.md)
+- [開發路線圖](docs/roadmap.md)（目前開發進度可看這份文件的打勾狀態）
 
 ## 啟動專案
 

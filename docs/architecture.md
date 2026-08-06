@@ -72,6 +72,7 @@ API 在 Docker Compose 內透過 `db:5432` 連接 PostgreSQL；瀏覽器則透�
 
 ## 第一階段範圍
 
+- 註冊、登入、登出，以及使用者權限（Todo 僅能存取自己的資料，`todos` 需關聯 `users.id`）。
 - Todo CRUD：建立、讀取、更新完成狀態、編輯與刪除。
 - PostgreSQL 資料表與基本資料初始化。
 - Vue 3 前端與 REST API 串接。
@@ -79,4 +80,4 @@ API 在 Docker Compose 內透過 `db:5432` 連接 PostgreSQL；瀏覽器則透�
 
 ## 後續規劃
 
-登入、註冊、登出、忘記密碼與使用者權限先不納入 MVP，待 Todo 主流程完成後再加入。完整 API 規劃見 [api.md](api.md)，資料模型見 [database.md](database.md)。
+忘記密碼先不納入 MVP，待上述功能完成後再加入。完整 API 規劃見 [api.md](api.md)，資料模型見 [database.md](database.md)。
