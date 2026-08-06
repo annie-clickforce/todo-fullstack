@@ -5,10 +5,12 @@
 Todo Full Stack 採用前後端分離架構。使用者透過瀏覽器操作 Vue 3 前端，前端以 HTTP JSON 呼叫 Node.js REST API，API 再透過 PostgreSQL 儲存 Todo 資料。三個服務由 Docker Compose 管理。
 
 ```mermaid
-flowchart LR
+flowchart TD
     User[使用者] --> Browser[瀏覽器]
+    Browser --> Frontend
 
     subgraph Docker Compose
+        direction LR
         Frontend[Vue 3 + Vite 前端]
         API[Node.js + Express API]
         DB[(PostgreSQL)]
@@ -16,8 +18,6 @@ flowchart LR
         Frontend -->|HTTP JSON| API
         API -->|SQL| DB
     end
-
-    Browser --> Frontend
 ```
 
 ## 元件職責
