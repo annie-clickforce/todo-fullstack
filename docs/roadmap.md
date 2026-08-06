@@ -2,11 +2,11 @@
 
 本文件將 Todo MVP 的第一階段（見 [architecture.md](architecture.md) 「第一階段範圍」）拆成可以一步一步完成、每步都能獨立驗證的小任務。建議一次只做一步，做完就實際測試（curl、瀏覽器或資料庫工具）再進到下一步。
 
-## 第一階段：資料庫先通
+## ✅️ 第一階段：資料庫先通
 
-1. 依 [database.md](database.md) 的 `todos` 資料表規格寫一支 SQL migration（欄位：`id`、`title`、`description`、`completed`、`created_at`、`updated_at`；先不加 `user_id`，因為認證功能還沒開始做）。
-2. 決定怎麼執行 migration——初期可以先手動用 `psql` 跑一次，不用急著導入 migration 工具（例如 node-pg-migrate）。
-3. 驗證：`docker compose up db`，用 psql 或 DBeaver 連進去，確認資料表已建立。
+1. ✅️ 依 [database.md](database.md) 的 `todos` 資料表規格寫一支 SQL migration（欄位：`id`、`title`、`description`、`completed`、`created_at`、`updated_at`；先不加 `user_id`，因為認證功能還沒開始做）。
+2. ✅️ 決定怎麼執行 migration——初期可以先手動用 `psql` 跑一次，不用急著導入 migration 工具（例如 node-pg-migrate）。
+3. ✅️ 驗證：`docker compose up db`，用 psql 或 DBeaver 連進去，確認資料表已建立。
 
 ## 第二階段：後端能讀寫資料庫
 
