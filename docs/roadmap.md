@@ -24,7 +24,7 @@
 8. ✅️ 後端加裝密碼雜湊套件（bcrypt 或 argon2），實作 `POST /auth/register`：驗證 `email` 唯一、密碼至少 8 碼，雜湊密碼後寫入 `users`，回傳 `201`。
 9. ✅️ 決定用 Session 還是 JWT 做登入狀態（先選一種做就好，不用兩個都做），實作 `POST /auth/login`：驗證帳密，設定 HTTP-only Cookie，回傳目前使用者資料；帳密錯誤回 `401`。
 10. ✅️ 寫一支「需要登入」的 middleware，檢查 Cookie 是否有效，沒有就回 `401`；先掛在一個測試用路由確認 middleware 本身邏輯正確。
-11. 把 middleware 掛到所有 Todo 端點上，並把已完成的 `GET /api/v1/todos` 改成只用 `WHERE user_id = 目前登入的使用者`。
+11. ✅️ 把 middleware 掛到所有 Todo 端點上，並把已完成的 `GET /api/v1/todos` 改成只用 `WHERE user_id = 目前登入的使用者`。
 12. 實作 `POST /auth/logout`：清除認證 Cookie，回傳 `204`。
 13. 手動測試整條認證流程：註冊 → 登入 → 打 `GET /api/v1/todos` 確認能通 → 登出 → 再打一次確認回 `401`。
 

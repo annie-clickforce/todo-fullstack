@@ -111,12 +111,14 @@ app.get("/api/v1/auth/me", requireAuth, async (request, response) => {
   response.json(result.rows[0]);
 });
 
-app.get("/api/v1/todos", async (_request, response) => {
+app.get("/api/v1/todos", requireAuth, async (request, response) => {
   const result = await pool.query(
     `SELECT id, title, description, completed,
             created_at AS "createdAt", updated_at AS "updatedAt"
      FROM todos
-     ORDER BY created_at DESC`
+     WHERE user_id = $1
+     ORDER BY created_at DESC`,
+    [request.session.userId]
   );
   response.json(result.rows);
 });
