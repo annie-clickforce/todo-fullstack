@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import pool from "./db.js";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PgSession = connectPgSimple(session);
 
 function requireAuth(request, response, next) {
@@ -152,6 +153,98 @@ app.post("/api/v1/todos", requireAuth, async (request, response) => {
   );
 
   response.status(201).json(result.rows[0]);
+});
+
+app.get("/api/v1/todos/:id", requireAuth, async (request, response) => {
+  if (!UUID_REGEX.test(request.params.id)) {
+    return response.status(404).json({ message: "Todo not found" });
+  }
+
+  const result = await pool.query(
+    `SELECT id, title, description, completed,
+            created_at AS "createdAt", updated_at AS "updatedAt"
+     FROM todos
+     WHERE id = $1 AND user_id = $2`,
+    [request.params.id, request.session.userId]
+  );
+
+  if (result.rows.length === 0) {
+    return response.status(404).json({ message: "Todo not found" });
+  }
+
+  response.json(result.rows[0]);
+});
+
+app.patch("/api/v1/todos/:id", requireAuth, async (request, response) => {
+  if (!UUID_REGEX.test(request.params.id)) {
+    return response.status(404).json({ message: "Todo not found" });
+  }
+
+  const { title, description, completed } = request.body ?? {};
+  const setClauses = [];
+  const values = [];
+
+  if (title !== undefined) {
+    if (typeof title !== "string" || !title.trim()) {
+      return response.status(422).json({
+        message: "Validation failed",
+        errors: { title: ["Title is required"] },
+      });
+    }
+    values.push(title.trim());
+    setClauses.push(`title = $${values.length}`);
+  }
+
+  if (description !== undefined) {
+    values.push(description);
+    setClauses.push(`description = $${values.length}`);
+  }
+
+  if (completed !== undefined) {
+    if (typeof completed !== "boolean") {
+      return response.status(422).json({
+        message: "Validation failed",
+        errors: { completed: ["Completed must be true or false"] },
+      });
+    }
+    values.push(completed);
+    setClauses.push(`completed = $${values.length}`);
+  }
+
+  setClauses.push("updated_at = now()");
+  values.push(request.params.id, request.session.userId);
+
+  const result = await pool.query(
+    `UPDATE todos
+     SET ${setClauses.join(", ")}
+     WHERE id = $${values.length - 1} AND user_id = $${values.length}
+     RETURNING id, title, description, completed,
+               created_at AS "createdAt", updated_at AS "updatedAt"`,
+    values
+  );
+
+  if (result.rows.length === 0) {
+    return response.status(404).json({ message: "Todo not found" });
+  }
+
+  response.json(result.rows[0]);
+});
+
+app.delete("/api/v1/todos/:id", requireAuth, async (request, response) => {
+  if (!UUID_REGEX.test(request.params.id)) {
+    return response.status(404).json({ message: "Todo not found" });
+  }
+
+  const result = await pool.query(
+    `DELETE FROM todos WHERE id = $1 AND user_id = $2 RETURNING id`,
+    [request.params.id, request.session.userId]
+  );
+
+  if (result.rowCount === 0) {
+    return response.status(404).json({ message: "Todo not found" });
+  }
+
+  response.status(204).end();
 });
 
 export default app;
