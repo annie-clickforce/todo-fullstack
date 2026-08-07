@@ -124,6 +124,6 @@
 
 ### 7-6　整合收尾
 
-57. 把前端的 `VITE_API_BASE_URL` 改成指向新的 Laravel API，實際跑一次完整流程（註冊 → 登入 → 新增/編輯/勾選/刪除 Todo → 登出），確認畫面完全正常。
-58. 設定 CORS（跨來源請求，等同你現在 Node 版本裝的 `cors` 套件那段設定），讓前端網址可以打這支新 API，並且能帶 Cookie。
+57. ✅️ 把前端的 `VITE_API_BASE_URL` 改成指向新的 Laravel API，實際跑一次完整流程（註冊 → 登入 → 新增/編輯/勾選/刪除 Todo → 登出），確認畫面完全正常。（`VITE_API_BASE_URL` 本身不用改，因為第 33 步就已經把 Docker 的 `api` 服務換成 Laravel、port 沒變。但發現前端完全沒處理 Sanctum 需要的 CSRF Cookie 流程，補在 `frontend/src/api.js`：非 GET 請求前先確保有 `XSRF-TOKEN` Cookie（沒有就先打 `/sanctum/csrf-cookie`），並把它讀出來放進 `X-XSRF-TOKEN` header，不然瀏覽器實際操作會收到 `419`。）
+58. ✅️ 設定 CORS（跨來源請求，等同你現在 Node 版本裝的 `cors` 套件那段設定），讓前端網址可以打這支新 API，並且能帶 Cookie。（這步在 7-3 認證測試時就已經先做了，因為 Sanctum SPA 認證從一開始就需要 CORS 支援憑證才能測。）
 59. 都確認沒問題後，把舊的 Node.js `backend` 資料夾刪掉或封存。
