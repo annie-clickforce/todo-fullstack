@@ -47,4 +47,9 @@ class User extends Authenticatable
     {
         return $this->password_hash;
     }
+
+    public function todos()
+    {
+        return $this->hasMany(Todo::class);
+    }
 }

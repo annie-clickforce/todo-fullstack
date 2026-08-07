@@ -108,14 +108,14 @@
 47. ✅️ 幫 Todo 相關路由加上「要求登入」的保護——Laravel 把這種攔截邏輯叫做 middleware，效果等同你現在寫的 `requireAuth` 函式，只是這裡用 Laravel 內建的 `auth:sanctum`，不用自己刻。（Todo 路由本身還沒建立，這步先把保護機制準備好，等 7-4 建路由時掛上。）
 48. ✅️ 手動測試整條流程：註冊 → 登入 → 打受保護的路由確認能通 → 登出 → 再打一次確認回 `401`（跟本文件第 13 步的測試方式一樣）。過程中修掉兩個 bug：① `php artisan serve` 在 Docker 裡的子行程不會繼承容器環境變數，導致連錯資料庫——改成直接用 `php -S` 啟動，不透過 `artisan serve`。② UUID 主鍵用資料庫端 `DEFAULT` 產生時，Eloquent 建立資料後讀不到剛產生的 id——改成在 Model 的 `creating` 事件裡由應用程式產生 UUID。另外因為是純 API、沒有登入頁面，調整 `Authenticate` middleware 跟 Exception Handler，讓未登入一律回 JSON `401`，不要嘗試導頁。
 
-### 7-4　Todo CRUD（比照 api.md）
+### ✅️ 7-4　Todo CRUD（比照 api.md）
 
-49. 建立 Todo Model（`php artisan make:model Todo`），設定它跟 User 的關聯（一個使用者對應多筆 Todo）。
-50. 建立 `TodoController`（`php artisan make:controller TodoController`），寫一個列出「目前登入者所有 Todo」的方法，對應 `GET /todos`。
-51. 寫新增一筆 Todo 的方法，對應 `POST /todos`。
-52. 依序寫查單筆／更新／刪除的方法，對應 `GET/PATCH/DELETE /todos/:id`——每一支都要測「查到不是自己的 Todo 要回 `404`」，不能讓使用者看到別人的資料。
-53. 把 `TodoController` 的方法對應到 `routes/api.php` 的路徑，並掛上第 47 步做的登入保護。
-54. 確認 Laravel 預設驗證失敗時回傳的 JSON 格式（跟 api.md 定義的 `{ "message": ..., "errors": {...} }` 其實很接近），如果有落差要自己調整。
+49. ✅️ 建立 Todo Model（`php artisan make:model Todo`），設定它跟 User 的關聯（一個使用者對應多筆 Todo）。
+50. ✅️ 建立 `TodoController`（`php artisan make:controller TodoController`），寫一個列出「目前登入者所有 Todo」的方法，對應 `GET /todos`。
+51. ✅️ 寫新增一筆 Todo 的方法，對應 `POST /todos`。
+52. ✅️ 依序寫查單筆／更新／刪除的方法，對應 `GET/PATCH/DELETE /todos/:id`——每一支都要測「查到不是自己的 Todo 要回 `404`」，不能讓使用者看到別人的資料。（用 UUID 格式驗證擋掉不合法的 id，避免直接查詢 Postgres 報錯。）
+53. ✅️ 把 `TodoController` 的方法對應到 `routes/api.php` 的路徑，並掛上第 47 步做的登入保護。
+54. ✅️ 確認 Laravel 預設驗證失敗時回傳的 JSON 格式（跟 api.md 定義的 `{ "message": ..., "errors": {...} }` 其實很接近），如果有落差要自己調整。（實際做法：手動組錯誤訊息而非用 Laravel 預設格式，確保跟 Node 版本、api.md 文字完全一致。過程中也發現並修掉 `$fillable` 沒列 `user_id`／建立時沒指定 `completed` 預設值的兩個 bug——都是 Eloquent「批次賦值白名單」與「資料庫端預設值讀不回來」這兩個模式重複出現的坑。）
 
 ### 7-5　忘記密碼（Node 版沒做，api.md 已定義，重構時順便補齊）
 
