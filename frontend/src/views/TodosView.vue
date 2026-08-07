@@ -18,6 +18,14 @@ const newTodo = reactive({
 });
 const addError = ref("");
 
+function redirectIfSessionExpired(error) {
+  if (error instanceof ApiError && error.status === 401) {
+    router.push("/login");
+    return true;
+  }
+  return false;
+}
+
 onMounted(async () => {
   try {
     const user = await apiFetch("/auth/me");
@@ -30,8 +38,10 @@ onMounted(async () => {
 
   try {
     todos.value = await apiFetch("/todos");
-  } catch {
-    loadError.value = "讀取待辦事項失敗，請重新整理再試一次";
+  } catch (error) {
+    if (!redirectIfSessionExpired(error)) {
+      loadError.value = "讀取待辦事項失敗，請重新整理再試一次";
+    }
   } finally {
     isLoading.value = false;
   }
@@ -55,7 +65,9 @@ async function addTodo() {
     newTodo.title = "";
     newTodo.description = "";
   } catch (error) {
-    addError.value = error instanceof ApiError ? error.message : "新增失敗，請稍後再試";
+    if (!redirectIfSessionExpired(error)) {
+      addError.value = error instanceof ApiError ? error.message : "新增失敗，請稍後再試";
+    }
   }
 }
 
@@ -73,8 +85,9 @@ async function toggleTodo(id) {
       method: "PATCH",
       body: JSON.stringify({ completed: todo.completed }),
     });
-  } catch {
+  } catch (error) {
     todo.completed = previousState;
+    redirectIfSessionExpired(error);
   }
 }
 
@@ -82,8 +95,10 @@ async function removeTodo(id) {
   try {
     await apiFetch(`/todos/${id}`, { method: "DELETE" });
     todos.value = todos.value.filter((item) => item.id !== id);
-  } catch {
-    loadError.value = "刪除失敗，請稍後再試";
+  } catch (error) {
+    if (!redirectIfSessionExpired(error)) {
+      loadError.value = "刪除失敗，請稍後再試";
+    }
   }
 }
 
@@ -110,7 +125,7 @@ async function handleLogout() {
       <form class="todo-form" @submit.prevent="addTodo">
         <div class="field">
           <label for="todo-title">標題</label>
-          <input id="todo-title" v-model="newTodo.title" type="text" required />
+          <input id="todo-title" v-model="newTodo.title" type="text" maxlength="255" required />
         </div>
         <div class="field">
           <label for="todo-description">說明</label>

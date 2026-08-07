@@ -42,7 +42,14 @@ async function handleSubmit() {
       <form @submit.prevent="handleSubmit">
         <div class="field">
           <label for="register-name">名稱</label>
-          <input id="register-name" v-model="form.name" type="text" autocomplete="name" required />
+          <input
+            id="register-name"
+            v-model="form.name"
+            type="text"
+            autocomplete="name"
+            maxlength="100"
+            required
+          />
           <p v-if="errors.name" class="error-text">{{ errors.name[0] }}</p>
         </div>
         <div class="field">
@@ -60,6 +67,7 @@ async function handleSubmit() {
             minlength="8"
             required
           />
+          <p class="field-hint">至少 8 碼</p>
           <p v-if="errors.password" class="error-text">{{ errors.password[0] }}</p>
         </div>
         <p v-if="errors.general" class="error-text">{{ errors.general[0] }}</p>

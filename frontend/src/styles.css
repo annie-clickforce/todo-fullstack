@@ -92,6 +92,12 @@ h1 {
   font-family: inherit;
 }
 
+.field-hint {
+  margin: 0.375rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
 .field input:focus,
 .field textarea:focus {
   outline: 2px solid var(--color-primary);
