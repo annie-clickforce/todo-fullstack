@@ -81,8 +81,8 @@
 
 ### 7-1　專案初始化
 
-29. 本機安裝 PHP（8.1 版本即可）與 Composer（PHP 的套件管理工具，角色跟 Node.js 的 `npm` 一樣）。
-30. 用 Composer 建立一個全新的 Laravel 8 專案：`composer create-project laravel/laravel:^8.0 backend-laravel`（先跟舊的 `backend` 資料夾並存，不要急著刪，確認新的能動再取代）。
+29. ✅️ 本機安裝 PHP（8.1 版本即可）與 Composer（PHP 的套件管理工具，角色跟 Node.js 的 `npm` 一樣）。
+30. ✅️ 用 Composer 建立一個全新的 Laravel 8 專案：`composer create-project laravel/laravel:^8.0 backend-laravel`（先跟舊的 `backend` 資料夾並存，不要急著刪，確認新的能動再取代）。
 31. 打開新專案的 `.env` 檔案（跟現在 Node 版本的 `.env` 是同樣的概念），把資料庫連線資訊改成連到現有的 PostgreSQL（`docker-compose.yml` 裡的 `db` 服務）。
 32. 用 Composer 加裝 `laravel/sanctum`：`composer require laravel/sanctum`。Sanctum 是 Laravel 官方的登入驗證套件，這裡要用它的「SPA（單頁應用）認證」模式——效果等同你現在手刻的 `express-session` 加 Cookie：前端登入後靠 Cookie 記住登入狀態，只是換成 Laravel 內建的做法，不用自己刻 session 邏輯。
 33. 把 `docker-compose.yml` 裡原本跑 Node.js 的 `api` 服務，改成跑 Laravel（先用最簡單的 `php artisan serve` 就好，不用一開始就搞正式部署那套 Nginx + php-fpm 架構）。
