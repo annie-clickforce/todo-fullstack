@@ -90,8 +90,8 @@
 
 ### 7-2　資料庫（比照 database.md）
 
-35. Laravel 管理資料庫結構的方式叫「migration」——概念跟你之前手寫的 SQL migration 檔案一樣（都是「版本化的資料庫變更腳本」），差別是 Laravel 要求用 PHP 語法寫，不是直接寫 SQL。先用指令 `php artisan make:migration create_users_table` 產生一支空白的 migration 檔案。
-36. 打開產生的檔案，照 database.md 的 `users` 資料表規格填欄位。**要特別注意**：Laravel 預設用「自動遞增的數字」當主鍵（1, 2, 3...），但你原本的資料庫是用 UUID 當主鍵，要手動改成 `$table->uuid('id')->primary()`，並且要在對應的 Model（等同你現在資料表對應的「一筆一筆資料的物件」概念）裡加幾行程式碼，讓新增資料時自動產生 UUID（Laravel 8 沒有內建這個功能，網路上搜尋「laravel 8 uuid primary key」會找到現成寫法）。
+35. ✅️ Laravel 管理資料庫結構的方式叫「migration」——概念跟你之前手寫的 SQL migration 檔案一樣（都是「版本化的資料庫變更腳本」），差別是 Laravel 要求用 PHP 語法寫，不是直接寫 SQL。（實際做法：Laravel 8 建立專案時已內建一支 `create_users_table` migration，直接改用這支即可，不用另外跑 `make:migration`，跑了會撞名。）
+36. ✅️ 打開產生的檔案，照 database.md 的 `users` 資料表規格填欄位。**要特別注意**：Laravel 預設用「自動遞增的數字」當主鍵（1, 2, 3...），但你原本的資料庫是用 UUID 當主鍵，要手動改成 `$table->uuid('id')->primary()`。（實際做法：直接在資料庫層用 `DEFAULT gen_random_uuid()` 讓 UUID 由資料庫自動產生，跟原本 Node 版本的 SQL migration 做法一致，Model 不需要額外寫產生 UUID 的邏輯，只需設定 `$incrementing = false`、`$keyType = 'string'`。）
 37. 同樣方式，用 `php artisan make:migration create_todos_table` 建立 `todos` 資料表的 migration，欄位、外鍵、索引都比照 database.md。
 38. 執行 `php artisan migrate` 跑 migration，用 psql 或 DBeaver 連進資料庫，確認資料表建立正確、欄位型別符合 database.md。
 
