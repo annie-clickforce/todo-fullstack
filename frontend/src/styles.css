@@ -133,12 +133,21 @@ h1 {
 .btn-danger {
   background: var(--color-danger);
   color: var(--color-primary-text);
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
 }
 
 .btn-danger:hover {
   background: var(--color-danger-hover);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.btn-ghost:hover {
+  color: var(--color-text);
+  border-color: var(--color-text-muted);
 }
 
 .helper-text {
@@ -214,6 +223,22 @@ h1 {
 
 .todo-item__body {
   flex: 1;
+}
+
+.todo-item__edit-input {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  font-family: inherit;
+}
+
+.todo-item__edit-input + .todo-item__edit-input {
+  margin-top: 0.5rem;
 }
 
 .todo-item__title {

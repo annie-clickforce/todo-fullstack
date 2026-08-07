@@ -62,6 +62,7 @@
 ## 額外補強（不算開發步驟，MVP 完成後自行檢查新增）
 
 - ✅️ 加上全域錯誤處理 middleware（`backend/src/app.js`）：非預期錯誤（例如資料庫查詢失敗）統一回傳 `{ "message": "Internal server error" }` 的 JSON 格式，並在伺服器端 log 出來；避免 `NODE_ENV` 未設為 production 時，Express 預設錯誤頁把 stack trace（檔案路徑、程式碼結構）外洩給呼叫端。
+- ✅️ Todo 列表頁加上「編輯」功能：點擊後標題／說明變成輸入框，可儲存（串 `PATCH /todos/:id`）或取消，原本後端已支援但前端沒有入口。
 
 ## 範圍之外（暫緩）
 
@@ -72,3 +73,4 @@
 - 正式環境需設定 `NODE_ENV=production`，作為上面全域錯誤處理器之外多一層防護。
 - `POST /auth/register` 的 `name`／`email` 目前沒有後端長度驗證，超過資料庫欄位長度時會被 DB 擋下、回傳 `500`，語意上應該回 `422`。
 - 登入／註冊端點沒有速率限制（rate limiting），有暴力破解風險。
+- Session Cookie 目前沒設定 `secure`／`sameSite`（本機 http 開發環境本來就不該設 `secure:true`）；若之後部署到正式環境（https），`express-session` 的 cookie 需加上 `secure: true`。

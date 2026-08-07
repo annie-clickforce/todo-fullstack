@@ -91,6 +91,52 @@ async function toggleTodo(id) {
   }
 }
 
+const editingId = ref(null);
+const editForm = reactive({
+  title: "",
+  description: "",
+});
+const editError = ref("");
+
+function startEdit(todo) {
+  editingId.value = todo.id;
+  editForm.title = todo.title;
+  editForm.description = todo.description ?? "";
+  editError.value = "";
+}
+
+function cancelEdit() {
+  editingId.value = null;
+  editError.value = "";
+}
+
+async function saveEdit(id) {
+  if (!editForm.title.trim()) {
+    editError.value = "標題不能是空的";
+    return;
+  }
+
+  try {
+    const updated = await apiFetch(`/todos/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        title: editForm.title.trim(),
+        description: editForm.description.trim(),
+      }),
+    });
+    const todo = todos.value.find((item) => item.id === id);
+    if (todo) {
+      todo.title = updated.title;
+      todo.description = updated.description;
+    }
+    editingId.value = null;
+  } catch (error) {
+    if (!redirectIfSessionExpired(error)) {
+      editError.value = error instanceof ApiError ? error.message : "更新失敗，請稍後再試";
+    }
+  }
+}
+
 async function removeTodo(id) {
   try {
     await apiFetch(`/todos/${id}`, { method: "DELETE" });
@@ -141,14 +187,35 @@ async function handleLogout() {
       <p v-if="isLoading" class="empty-state">載入中…</p>
       <ul v-else-if="todos.length > 0" class="todo-list">
         <li v-for="todo in todos" :key="todo.id" class="todo-item">
-          <input type="checkbox" :checked="todo.completed" @change="toggleTodo(todo.id)" />
+          <input
+            type="checkbox"
+            :checked="todo.completed"
+            :disabled="editingId === todo.id"
+            @change="toggleTodo(todo.id)"
+          />
           <div class="todo-item__body">
-            <div class="todo-item__title" :class="{ 'todo-item__title--done': todo.completed }">
-              {{ todo.title }}
-            </div>
-            <p v-if="todo.description" class="todo-item__description">{{ todo.description }}</p>
+            <template v-if="editingId === todo.id">
+              <input v-model="editForm.title" type="text" maxlength="255" class="todo-item__edit-input" />
+              <input v-model="editForm.description" type="text" class="todo-item__edit-input" />
+              <p v-if="editError" class="error-text">{{ editError }}</p>
+            </template>
+            <template v-else>
+              <div class="todo-item__title" :class="{ 'todo-item__title--done': todo.completed }">
+                {{ todo.title }}
+              </div>
+              <p v-if="todo.description" class="todo-item__description">{{ todo.description }}</p>
+            </template>
           </div>
-          <button type="button" class="btn btn-danger" @click="removeTodo(todo.id)">刪除</button>
+          <template v-if="editingId === todo.id">
+            <button type="button" class="btn btn-primary" style="width: auto" @click="saveEdit(todo.id)">
+              儲存
+            </button>
+            <button type="button" class="btn btn-ghost" @click="cancelEdit">取消</button>
+          </template>
+          <template v-else>
+            <button type="button" class="btn btn-secondary" @click="startEdit(todo)">編輯</button>
+            <button type="button" class="btn btn-danger" @click="removeTodo(todo.id)">刪除</button>
+          </template>
         </li>
       </ul>
       <p v-else class="empty-state">目前沒有待辦事項</p>
