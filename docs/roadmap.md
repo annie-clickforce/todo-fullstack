@@ -48,11 +48,11 @@
 19. ✅️ 註冊頁面串接 `POST /auth/register`。
 20. ✅️ 登入頁面串接 `POST /auth/login`，成功後導向 Todo 列表頁。
 21. ✅️ 加上路由守衛：未登入時導去登入頁（此時已有登入 API，可以用 session 是否有效來判斷）。
-22. 登出按鈕串接 `POST /auth/logout`。
-23. Todo 列表頁寫一個 `fetch` 函式呼叫 `GET /todos`，把資料顯示在畫面上。
-24. 「新增 Todo」的表單串接 `POST`。
-25. 「勾選完成」的 checkbox 串接 `PATCH`。
-26. 「刪除」按鈕串接 `DELETE`。
+22. ✅️ 登出按鈕串接 `POST /auth/logout`。
+23. ✅️ Todo 列表頁寫一個 `fetch` 函式呼叫 `GET /todos`，把資料顯示在畫面上。
+24. ✅️ 「新增 Todo」的表單串接 `POST`。
+25. ✅️ 「勾選完成」的 checkbox 串接 `PATCH`。
+26. ✅️ 「刪除」按鈕串接 `DELETE`。
 
 ## 第六階段：補強
 

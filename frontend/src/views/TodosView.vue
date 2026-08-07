@@ -1,9 +1,22 @@
 <script setup>
 import { onMounted, reactive, ref } from "vue";
-import { apiFetch } from "../api.js";
+import { useRouter } from "vue-router";
+import { apiFetch, ApiError } from "../api.js";
+
+const router = useRouter();
 
 const userName = ref("");
 const userEmail = ref("");
+
+const todos = ref([]);
+const isLoading = ref(true);
+const loadError = ref("");
+
+const newTodo = reactive({
+  title: "",
+  description: "",
+});
+const addError = ref("");
 
 onMounted(async () => {
   try {
@@ -14,46 +27,73 @@ onMounted(async () => {
     userName.value = "";
     userEmail.value = "";
   }
+
+  try {
+    todos.value = await apiFetch("/todos");
+  } catch {
+    loadError.value = "讀取待辦事項失敗，請重新整理再試一次";
+  } finally {
+    isLoading.value = false;
+  }
 });
 
-const todos = ref([
-  { id: 1, title: "買牛奶", description: "順便買麵包", completed: false },
-  { id: 2, title: "寫周報", description: "", completed: true },
-]);
-
-const newTodo = reactive({
-  title: "",
-  description: "",
-});
-
-let nextId = todos.value.length + 1;
-
-function addTodo() {
+async function addTodo() {
   if (!newTodo.title.trim()) {
     return;
   }
-  todos.value.push({
-    id: nextId++,
-    title: newTodo.title.trim(),
-    description: newTodo.description.trim(),
-    completed: false,
-  });
-  newTodo.title = "";
-  newTodo.description = "";
-}
 
-function toggleTodo(id) {
-  const todo = todos.value.find((item) => item.id === id);
-  if (todo) {
-    todo.completed = !todo.completed;
+  addError.value = "";
+  try {
+    const todo = await apiFetch("/todos", {
+      method: "POST",
+      body: JSON.stringify({
+        title: newTodo.title.trim(),
+        description: newTodo.description.trim(),
+      }),
+    });
+    todos.value.unshift(todo);
+    newTodo.title = "";
+    newTodo.description = "";
+  } catch (error) {
+    addError.value = error instanceof ApiError ? error.message : "新增失敗，請稍後再試";
   }
 }
 
-function removeTodo(id) {
-  todos.value = todos.value.filter((item) => item.id !== id);
+async function toggleTodo(id) {
+  const todo = todos.value.find((item) => item.id === id);
+  if (!todo) {
+    return;
+  }
+
+  const previousState = todo.completed;
+  todo.completed = !previousState;
+
+  try {
+    await apiFetch(`/todos/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ completed: todo.completed }),
+    });
+  } catch {
+    todo.completed = previousState;
+  }
 }
 
-function handleLogout() {}
+async function removeTodo(id) {
+  try {
+    await apiFetch(`/todos/${id}`, { method: "DELETE" });
+    todos.value = todos.value.filter((item) => item.id !== id);
+  } catch {
+    loadError.value = "刪除失敗，請稍後再試";
+  }
+}
+
+async function handleLogout() {
+  try {
+    await apiFetch("/auth/logout", { method: "POST" });
+  } finally {
+    router.push("/login");
+  }
+}
 </script>
 
 <template>
@@ -80,8 +120,11 @@ function handleLogout() {}
           新增
         </button>
       </form>
+      <p v-if="addError" class="error-text">{{ addError }}</p>
+      <p v-if="loadError" class="error-text">{{ loadError }}</p>
 
-      <ul v-if="todos.length > 0" class="todo-list">
+      <p v-if="isLoading" class="empty-state">載入中…</p>
+      <ul v-else-if="todos.length > 0" class="todo-list">
         <li v-for="todo in todos" :key="todo.id" class="todo-item">
           <input type="checkbox" :checked="todo.completed" @change="toggleTodo(todo.id)" />
           <div class="todo-item__body">
