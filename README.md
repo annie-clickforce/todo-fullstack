@@ -54,4 +54,4 @@
 
 ## 後續規劃
 
-- 完成本專案後，建立新的 Repository，將後端以 Laravel 8、9 或 10 重構。
+- 後端改用 Laravel 8 重構，同一個 Repository 繼續進行（詳見 [開發路線圖](docs/roadmap.md) 第七階段）。

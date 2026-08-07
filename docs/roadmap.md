@@ -74,3 +74,56 @@
 - `POST /auth/register` 的 `name`／`email` 目前沒有後端長度驗證，超過資料庫欄位長度時會被 DB 擋下、回傳 `500`，語意上應該回 `422`。
 - 登入／註冊端點沒有速率限制（rate limiting），有暴力破解風險。
 - Session Cookie 目前沒設定 `secure`／`sameSite`（本機 http 開發環境本來就不該設 `secure:true`）；若之後部署到正式環境（https），`express-session` 的 cookie 需加上 `secure: true`。
+
+## 第七階段：後端改用 Laravel 8 重構（MVP 完成後新增需求）
+
+後端從 Node.js／Express 改用 Laravel 8 重構（同一個專案繼續做，不是另開 Repository）。前端（Vue 3）不換，API 規格沿用 [api.md](api.md)、資料模型沿用 [database.md](database.md)，目標是讓前端只要換 `VITE_API_BASE_URL` 就能無痛接上新後端。
+
+### 7-1　專案初始化
+
+29. 本機安裝 PHP（8.1 版本即可）與 Composer（PHP 的套件管理工具，角色跟 Node.js 的 `npm` 一樣）。
+30. 用 Composer 建立一個全新的 Laravel 8 專案：`composer create-project laravel/laravel:^8.0 backend-laravel`（先跟舊的 `backend` 資料夾並存，不要急著刪，確認新的能動再取代）。
+31. 打開新專案的 `.env` 檔案（跟現在 Node 版本的 `.env` 是同樣的概念），把資料庫連線資訊改成連到現有的 PostgreSQL（`docker-compose.yml` 裡的 `db` 服務）。
+32. 用 Composer 加裝 `laravel/sanctum`：`composer require laravel/sanctum`。Sanctum 是 Laravel 官方的登入驗證套件，這裡要用它的「SPA（單頁應用）認證」模式——效果等同你現在手刻的 `express-session` 加 Cookie：前端登入後靠 Cookie 記住登入狀態，只是換成 Laravel 內建的做法，不用自己刻 session 邏輯。
+33. 把 `docker-compose.yml` 裡原本跑 Node.js 的 `api` 服務，改成跑 Laravel（先用最簡單的 `php artisan serve` 就好，不用一開始就搞正式部署那套 Nginx + php-fpm 架構）。
+34. Laravel 沒有內建健康檢查路由，自己在 `routes/api.php`（定義 API 路徑要對應到哪段程式碼的檔案，等同你現在 `app.js` 裡那些 `app.get(...)` 的角色）加一個 `GET /api/v1/health`，回傳固定 JSON。跑起來後用瀏覽器或 curl 打這支，確認服務有正常啟動、能連上資料庫。
+
+### 7-2　資料庫（比照 database.md）
+
+35. Laravel 管理資料庫結構的方式叫「migration」——概念跟你之前手寫的 SQL migration 檔案一樣（都是「版本化的資料庫變更腳本」），差別是 Laravel 要求用 PHP 語法寫，不是直接寫 SQL。先用指令 `php artisan make:migration create_users_table` 產生一支空白的 migration 檔案。
+36. 打開產生的檔案，照 database.md 的 `users` 資料表規格填欄位。**要特別注意**：Laravel 預設用「自動遞增的數字」當主鍵（1, 2, 3...），但你原本的資料庫是用 UUID 當主鍵，要手動改成 `$table->uuid('id')->primary()`，並且要在對應的 Model（等同你現在資料表對應的「一筆一筆資料的物件」概念）裡加幾行程式碼，讓新增資料時自動產生 UUID（Laravel 8 沒有內建這個功能，網路上搜尋「laravel 8 uuid primary key」會找到現成寫法）。
+37. 同樣方式，用 `php artisan make:migration create_todos_table` 建立 `todos` 資料表的 migration，欄位、外鍵、索引都比照 database.md。
+38. 執行 `php artisan migrate` 跑 migration，用 psql 或 DBeaver 連進資料庫，確認資料表建立正確、欄位型別符合 database.md。
+
+### 7-3　認證（比照 api.md）
+
+39. 依照 Sanctum 官方文件設定「SPA 認證」，在設定檔裡把前端網址 `localhost:3010` 填進去，讓 Laravel 知道要信任這個前端送過來的登入 Cookie。
+40. Laravel 預設就內建一個 User Model（對應 `users` 資料表），稍微調整讓欄位符合我們的規格就好，不用整支重寫。
+41. 建立一個 Controller（Laravel 把「處理某類請求的邏輯」獨立寫成檔案，角色等同你現在 `app.js` 裡 `app.post("/auth/register", async (req, res) => {...})` 那段函式）：`php artisan make:controller AuthController`。
+42. 在 `AuthController` 寫 `register` 方法：驗證輸入資料（email 唯一、密碼至少 8 碼——Laravel 有內建驗證機制，用 `$request->validate([...])` 就能做，效果跟你原本手寫的 if/errors 判斷式一樣，只是換一種語法），用 `Hash::make()` 把密碼雜湊（等同原本用的 bcrypt），存進資料庫，回傳 `201`。
+43. 寫 `login` 方法：驗證帳密、登入成功回傳使用者資料；失敗回 `401`。
+44. 寫 `logout` 方法：登出、清除登入狀態，回傳 `204`。
+45. 寫一個回傳「目前登入者資料」的方法，對應 `GET /auth/me`。
+46. 在 `routes/api.php` 把上面四個方法對應到正確的網址（比照 api.md 定義的路徑）。
+47. 幫 Todo 相關路由加上「要求登入」的保護——Laravel 把這種攔截邏輯叫做 middleware，效果等同你現在寫的 `requireAuth` 函式，只是這裡用 Laravel 內建的 `auth:sanctum`，不用自己刻。
+48. 手動測試整條流程：註冊 → 登入 → 打受保護的路由確認能通 → 登出 → 再打一次確認回 `401`（跟本文件第 13 步的測試方式一樣）。
+
+### 7-4　Todo CRUD（比照 api.md）
+
+49. 建立 Todo Model（`php artisan make:model Todo`），設定它跟 User 的關聯（一個使用者對應多筆 Todo）。
+50. 建立 `TodoController`（`php artisan make:controller TodoController`），寫一個列出「目前登入者所有 Todo」的方法，對應 `GET /todos`。
+51. 寫新增一筆 Todo 的方法，對應 `POST /todos`。
+52. 依序寫查單筆／更新／刪除的方法，對應 `GET/PATCH/DELETE /todos/:id`——每一支都要測「查到不是自己的 Todo 要回 `404`」，不能讓使用者看到別人的資料。
+53. 把 `TodoController` 的方法對應到 `routes/api.php` 的路徑，並掛上第 47 步做的登入保護。
+54. 確認 Laravel 預設驗證失敗時回傳的 JSON 格式（跟 api.md 定義的 `{ "message": ..., "errors": {...} }` 其實很接近），如果有落差要自己調整。
+
+### 7-5　忘記密碼（Node 版沒做，api.md 已定義，重構時順便補齊）
+
+55. 寫 `POST /auth/forgot-password`：不管帳號存不存在都回 `202`，避免被猜出哪些 email 有註冊過。
+56. 寫 `POST /auth/reset-password`：檢查 Token 有效、沒過期、沒用過，成功後讓同一個使用者的其他 Token 都失效。
+
+### 7-6　整合收尾
+
+57. 把前端的 `VITE_API_BASE_URL` 改成指向新的 Laravel API，實際跑一次完整流程（註冊 → 登入 → 新增/編輯/勾選/刪除 Todo → 登出），確認畫面完全正常。
+58. 設定 CORS（跨來源請求，等同你現在 Node 版本裝的 `cors` 套件那段設定），讓前端網址可以打這支新 API，並且能帶 Cookie。
+59. 都確認沒問題後，把舊的 Node.js `backend` 資料夾刪掉或封存。
