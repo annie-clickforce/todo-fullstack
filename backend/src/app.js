@@ -255,4 +255,9 @@ app.delete("/api/v1/todos/:id", requireAuth, async (request, response) => {
   response.status(204).end();
 });
 
+app.use((error, _request, response, _next) => {
+  console.error(error);
+  response.status(500).json({ message: "Internal server error" });
+});
+
 export default app;

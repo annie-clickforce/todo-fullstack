@@ -59,6 +59,16 @@
 27. ✅️ 加上基本的欄位驗證（`title` 必填）與錯誤處理，回應格式依 [api.md](api.md) 定義的錯誤格式。
 28. ✅️ 調整畫面樣式，堪用即可。
 
+## 額外補強（不算開發步驟，MVP 完成後自行檢查新增）
+
+- ✅️ 加上全域錯誤處理 middleware（`backend/src/app.js`）：非預期錯誤（例如資料庫查詢失敗）統一回傳 `{ "message": "Internal server error" }` 的 JSON 格式，並在伺服器端 log 出來；避免 `NODE_ENV` 未設為 production 時，Express 預設錯誤頁把 stack trace（檔案路徑、程式碼結構）外洩給呼叫端。
+
 ## 範圍之外（暫緩）
 
 依 [architecture.md](architecture.md) 「後續規劃」，忘記密碼先不做，待註冊、登入、登出與 Todo 主流程完成後再加入。
+
+其他先記錄、暫不處理的資安／穩健性項目：
+
+- 正式環境需設定 `NODE_ENV=production`，作為上面全域錯誤處理器之外多一層防護。
+- `POST /auth/register` 的 `name`／`email` 目前沒有後端長度驗證，超過資料庫欄位長度時會被 DB 擋下、回傳 `500`，語意上應該回 `422`。
+- 登入／註冊端點沒有速率限制（rate limiting），有暴力破解風險。
