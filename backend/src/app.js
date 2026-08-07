@@ -1,6 +1,7 @@
 import express from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
+import cors from "cors";
 import bcrypt from "bcryptjs";
 import pool from "./db.js";
 
@@ -16,6 +17,13 @@ function requireAuth(request, response, next) {
 }
 
 const app = express();
+
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN ?? "http://localhost:3010",
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 

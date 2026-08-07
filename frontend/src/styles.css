@@ -70,6 +70,12 @@ h1 {
   color: var(--color-text-muted);
 }
 
+.error-text {
+  margin: -0.5rem 0 1rem;
+  font-size: 0.875rem;
+  color: var(--color-danger);
+}
+
 .field input,
 .field textarea {
   width: 100%;
