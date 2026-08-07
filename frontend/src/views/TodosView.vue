@@ -1,5 +1,20 @@
 <script setup>
-import { reactive, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
+import { apiFetch } from "../api.js";
+
+const userName = ref("");
+const userEmail = ref("");
+
+onMounted(async () => {
+  try {
+    const user = await apiFetch("/auth/me");
+    userName.value = user.name;
+    userEmail.value = user.email;
+  } catch {
+    userName.value = "";
+    userEmail.value = "";
+  }
+});
 
 const todos = ref([
   { id: 1, title: "買牛奶", description: "順便買麵包", completed: false },
@@ -45,7 +60,10 @@ function handleLogout() {}
   <div class="page page--top">
     <div class="card card--wide">
       <div class="page-header">
-        <h1>我的待辦事項</h1>
+        <div>
+          <h1><span class="title-highlight">{{ userName }}</span> 的待辦事項</h1>
+          <p class="subtitle">登入帳號：{{ userEmail }}</p>
+        </div>
         <button type="button" class="btn btn-secondary" @click="handleLogout">登出</button>
       </div>
 
