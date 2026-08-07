@@ -30,7 +30,7 @@
 
 ## 第四階段：Todo CRUD 剩餘端點
 
-14. 加上 `POST /api/v1/todos`（建立 Todo，寫入時帶上目前登入使用者的 `user_id`），用 curl 或 Postman 測試。
+14. ✅️ 加上 `POST /api/v1/todos`（建立 Todo，寫入時帶上目前登入使用者的 `user_id`），用 curl 或 Postman 測試。
 15. 依序加上 `GET /api/v1/todos/:id`、`PATCH /api/v1/todos/:id`、`DELETE /api/v1/todos/:id`，一個一個做；每支都要確認「查到不屬於自己的 Todo 要回 `404`」。
 
 ## 第五階段：前端串接

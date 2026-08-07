@@ -133,4 +133,25 @@ app.get("/api/v1/todos", requireAuth, async (request, response) => {
   response.json(result.rows);
 });
 
+app.post("/api/v1/todos", requireAuth, async (request, response) => {
+  const { title, description } = request.body ?? {};
+
+  if (typeof title !== "string" || !title.trim()) {
+    return response.status(422).json({
+      message: "Validation failed",
+      errors: { title: ["Title is required"] },
+    });
+  }
+
+  const result = await pool.query(
+    `INSERT INTO todos (user_id, title, description)
+     VALUES ($1, $2, $3)
+     RETURNING id, title, description, completed,
+               created_at AS "createdAt", updated_at AS "updatedAt"`,
+    [request.session.userId, title.trim(), description ?? null]
+  );
+
+  response.status(201).json(result.rows[0]);
+});
+
 export default app;
