@@ -117,10 +117,10 @@
 53. ✅️ 把 `TodoController` 的方法對應到 `routes/api.php` 的路徑，並掛上第 47 步做的登入保護。
 54. ✅️ 確認 Laravel 預設驗證失敗時回傳的 JSON 格式（跟 api.md 定義的 `{ "message": ..., "errors": {...} }` 其實很接近），如果有落差要自己調整。（實際做法：手動組錯誤訊息而非用 Laravel 預設格式，確保跟 Node 版本、api.md 文字完全一致。過程中也發現並修掉 `$fillable` 沒列 `user_id`／建立時沒指定 `completed` 預設值的兩個 bug——都是 Eloquent「批次賦值白名單」與「資料庫端預設值讀不回來」這兩個模式重複出現的坑。）
 
-### 7-5　忘記密碼（Node 版沒做，api.md 已定義，重構時順便補齊）
+### ✅️ 7-5　忘記密碼（Node 版沒做，api.md 已定義，重構時順便補齊）
 
-55. 寫 `POST /auth/forgot-password`：不管帳號存不存在都回 `202`，避免被猜出哪些 email 有註冊過。
-56. 寫 `POST /auth/reset-password`：檢查 Token 有效、沒過期、沒用過，成功後讓同一個使用者的其他 Token 都失效。
+55. ✅️ 寫 `POST /auth/forgot-password`：不管帳號存不存在都回 `202`，避免被猜出哪些 email 有註冊過。（新建 `password_reset_tokens` migration，比照 database.md：只存 Token 的 sha256 雜湊值，沒有配寄信服務，先只把 Token 記錄寫進資料庫。）
+56. ✅️ 寫 `POST /auth/reset-password`：檢查 Token 有效、沒過期、沒用過，成功後讓同一個使用者的其他 Token 都失效。（curl 測試：假 token 回 422、真 token 成功改密碼並可用新密碼登入、同一個 token 用第二次回 422。）
 
 ### 7-6　整合收尾
 
