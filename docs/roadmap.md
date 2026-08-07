@@ -88,12 +88,12 @@
 33. ✅️ 把 `docker-compose.yml` 裡原本跑 Node.js 的 `api` 服務，改成跑 Laravel（先用最簡單的 `php artisan serve` 就好，不用一開始就搞正式部署那套 Nginx + php-fpm 架構）。
 34. ✅️ Laravel 沒有內建健康檢查路由，自己在 `routes/api.php`（定義 API 路徑要對應到哪段程式碼的檔案，等同你現在 `app.js` 裡那些 `app.get(...)` 的角色）加一個 `GET /api/v1/health`，回傳固定 JSON。跑起來後用瀏覽器或 curl 打這支，確認服務有正常啟動、能連上資料庫。
 
-### 7-2　資料庫（比照 database.md）
+### ✅️ 7-2　資料庫（比照 database.md）
 
 35. ✅️ Laravel 管理資料庫結構的方式叫「migration」——概念跟你之前手寫的 SQL migration 檔案一樣（都是「版本化的資料庫變更腳本」），差別是 Laravel 要求用 PHP 語法寫，不是直接寫 SQL。（實際做法：Laravel 8 建立專案時已內建一支 `create_users_table` migration，直接改用這支即可，不用另外跑 `make:migration`，跑了會撞名。）
 36. ✅️ 打開產生的檔案，照 database.md 的 `users` 資料表規格填欄位。**要特別注意**：Laravel 預設用「自動遞增的數字」當主鍵（1, 2, 3...），但你原本的資料庫是用 UUID 當主鍵，要手動改成 `$table->uuid('id')->primary()`。（實際做法：直接在資料庫層用 `DEFAULT gen_random_uuid()` 讓 UUID 由資料庫自動產生，跟原本 Node 版本的 SQL migration 做法一致，Model 不需要額外寫產生 UUID 的邏輯，只需設定 `$incrementing = false`、`$keyType = 'string'`。）
-37. 同樣方式，用 `php artisan make:migration create_todos_table` 建立 `todos` 資料表的 migration，欄位、外鍵、索引都比照 database.md。
-38. 執行 `php artisan migrate` 跑 migration，用 psql 或 DBeaver 連進資料庫，確認資料表建立正確、欄位型別符合 database.md。
+37. ✅️ 同樣方式，用 `php artisan make:migration create_todos_table` 建立 `todos` 資料表的 migration，欄位、外鍵、索引都比照 database.md。
+38. ✅️ 執行 `php artisan migrate` 跑 migration，用 psql 或 DBeaver 連進資料庫，確認資料表建立正確、欄位型別符合 database.md。（過程中發現舊的 Node.js 版本已經在同一個資料庫建過 `users`／`todos` 表，含測試資料；因為 Laravel 要接手同一個資料庫，把舊表刪掉讓 Laravel 重建。）
 
 ### 7-3　認證（比照 api.md）
 
