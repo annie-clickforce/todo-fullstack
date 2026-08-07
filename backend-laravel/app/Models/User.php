@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -14,6 +15,13 @@ class User extends Authenticatable
     public $incrementing = false;
 
     protected $keyType = 'string';
+
+    protected static function booted()
+    {
+        static::creating(function (User $user) {
+            $user->{$user->getKeyName()} ??= (string) Str::uuid();
+        });
+    }
 
     /**
      * The attributes that are mass assignable.

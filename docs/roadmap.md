@@ -95,18 +95,18 @@
 37. ✅️ 同樣方式，用 `php artisan make:migration create_todos_table` 建立 `todos` 資料表的 migration，欄位、外鍵、索引都比照 database.md。
 38. ✅️ 執行 `php artisan migrate` 跑 migration，用 psql 或 DBeaver 連進資料庫，確認資料表建立正確、欄位型別符合 database.md。（過程中發現舊的 Node.js 版本已經在同一個資料庫建過 `users`／`todos` 表，含測試資料；因為 Laravel 要接手同一個資料庫，把舊表刪掉讓 Laravel 重建。）
 
-### 7-3　認證（比照 api.md）
+### ✅️ 7-3　認證（比照 api.md）
 
-39. 依照 Sanctum 官方文件設定「SPA 認證」，在設定檔裡把前端網址 `localhost:3010` 填進去，讓 Laravel 知道要信任這個前端送過來的登入 Cookie。
-40. Laravel 預設就內建一個 User Model（對應 `users` 資料表），稍微調整讓欄位符合我們的規格就好，不用整支重寫。
-41. 建立一個 Controller（Laravel 把「處理某類請求的邏輯」獨立寫成檔案，角色等同你現在 `app.js` 裡 `app.post("/auth/register", async (req, res) => {...})` 那段函式）：`php artisan make:controller AuthController`。
-42. 在 `AuthController` 寫 `register` 方法：驗證輸入資料（email 唯一、密碼至少 8 碼——Laravel 有內建驗證機制，用 `$request->validate([...])` 就能做，效果跟你原本手寫的 if/errors 判斷式一樣，只是換一種語法），用 `Hash::make()` 把密碼雜湊（等同原本用的 bcrypt），存進資料庫，回傳 `201`。
-43. 寫 `login` 方法：驗證帳密、登入成功回傳使用者資料；失敗回 `401`。
-44. 寫 `logout` 方法：登出、清除登入狀態，回傳 `204`。
-45. 寫一個回傳「目前登入者資料」的方法，對應 `GET /auth/me`。
-46. 在 `routes/api.php` 把上面四個方法對應到正確的網址（比照 api.md 定義的路徑）。
-47. 幫 Todo 相關路由加上「要求登入」的保護——Laravel 把這種攔截邏輯叫做 middleware，效果等同你現在寫的 `requireAuth` 函式，只是這裡用 Laravel 內建的 `auth:sanctum`，不用自己刻。
-48. 手動測試整條流程：註冊 → 登入 → 打受保護的路由確認能通 → 登出 → 再打一次確認回 `401`（跟本文件第 13 步的測試方式一樣）。
+39. ✅️ 依照 Sanctum 官方文件設定「SPA 認證」，在設定檔裡把前端網址 `localhost:3010` 填進去，讓 Laravel 知道要信任這個前端送過來的登入 Cookie。
+40. ✅️ Laravel 預設就內建一個 User Model（對應 `users` 資料表），稍微調整讓欄位符合我們的規格就好，不用整支重寫。
+41. ✅️ 建立一個 Controller（Laravel 把「處理某類請求的邏輯」獨立寫成檔案，角色等同你現在 `app.js` 裡 `app.post("/auth/register", async (req, res) => {...})` 那段函式）：`php artisan make:controller AuthController`。
+42. ✅️ 在 `AuthController` 寫 `register` 方法：驗證輸入資料（email 唯一、密碼至少 8 碼——Laravel 有內建驗證機制，用 `$request->validate([...])` 就能做，效果跟你原本手寫的 if/errors 判斷式一樣，只是換一種語法），用 `Hash::make()` 把密碼雜湊（等同原本用的 bcrypt），存進資料庫，回傳 `201`。
+43. ✅️ 寫 `login` 方法：驗證帳密、登入成功回傳使用者資料；失敗回 `401`。
+44. ✅️ 寫 `logout` 方法：登出、清除登入狀態，回傳 `204`。
+45. ✅️ 寫一個回傳「目前登入者資料」的方法，對應 `GET /auth/me`。
+46. ✅️ 在 `routes/api.php` 把上面四個方法對應到正確的網址（比照 api.md 定義的路徑）。
+47. ✅️ 幫 Todo 相關路由加上「要求登入」的保護——Laravel 把這種攔截邏輯叫做 middleware，效果等同你現在寫的 `requireAuth` 函式，只是這裡用 Laravel 內建的 `auth:sanctum`，不用自己刻。（Todo 路由本身還沒建立，這步先把保護機制準備好，等 7-4 建路由時掛上。）
+48. ✅️ 手動測試整條流程：註冊 → 登入 → 打受保護的路由確認能通 → 登出 → 再打一次確認回 `401`（跟本文件第 13 步的測試方式一樣）。過程中修掉兩個 bug：① `php artisan serve` 在 Docker 裡的子行程不會繼承容器環境變數，導致連錯資料庫——改成直接用 `php -S` 啟動，不透過 `artisan serve`。② UUID 主鍵用資料庫端 `DEFAULT` 產生時，Eloquent 建立資料後讀不到剛產生的 id——改成在 Model 的 `creating` 事件裡由應用程式產生 UUID。另外因為是純 API、沒有登入頁面，調整 `Authenticate` middleware 跟 Exception Handler，讓未登入一律回 JSON `401`，不要嘗試導頁。
 
 ### 7-4　Todo CRUD（比照 api.md）
 

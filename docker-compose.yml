@@ -26,6 +26,8 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
       APP_URL: http://localhost:${API_PORT:-3011}
       SESSION_DOMAIN: localhost
+      SANCTUM_STATEFUL_DOMAINS: localhost:${FRONTEND_PORT:-3010}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3010}
     volumes:
       - ./backend-laravel:/app
     depends_on:

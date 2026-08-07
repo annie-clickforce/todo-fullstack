@@ -13,4 +13,4 @@ COPY . .
 
 EXPOSE 3011
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=3011"]
+CMD ["php", "-S", "0.0.0.0:3011", "-t", "public", "public/index.php"]
