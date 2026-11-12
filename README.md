@@ -6,7 +6,7 @@
 
 ## 專案範圍
 
-- 前後端分離：Vue 3 前端透過 REST API 與 Node.js 後端溝通。
+- 前後端分離：Vue 3 前端透過 REST API 與 Laravel 後端溝通。
 - 使用 PostgreSQL 保存應用程式資料。
 - 提供註冊、登入、登出與 Todo CRUD。
 - 維護 API 文件、Markdown 文件與 Mermaid 架構圖。
@@ -15,9 +15,11 @@
 ## 技術
 
 - Vue 3
-- Node.js
+- Laravel 8（PHP）
 - PostgreSQL
 - Docker
+- Nginx
+- AWS EC2
 
 ## 功能
 

@@ -7,6 +7,20 @@
 
 前置條件：[roadmap.md](roadmap.md) 第七階段（Laravel 重構）已完成。跟 roadmap.md 一樣，建議一次只做一步，做完就照「✔ 驗證」實際確認，再進到下一步。
 
+## 部署的技術組成
+
+| 技術 | 正式環境中的角色 |
+|---|---|
+| Vue 3 | 前端，build 成靜態檔後由 Nginx 提供 |
+| Laravel 8（PHP） | 後端 API（`backend-laravel/`），以 php-fpm 容器執行 |
+| PostgreSQL 16 | 資料庫，容器執行，不對外開放 |
+| Docker Compose | 管理 Laravel 與 PostgreSQL 容器（`docker-compose.prod.yml`） |
+| Nginx | 裝在主機上，負責 HTTPS 與請求分派 |
+| AWS EC2 | 主機（Ubuntu 24.04、t3.micro） |
+| Let's Encrypt | 免費 HTTPS 憑證 |
+
+Node.js 只在 build 前端時以暫時容器使用（第 26 步），正式環境不執行 Node。舊的 Node.js 後端（`backend/`）不部署。
+
 ## 文件慣例
 
 每一步開頭標示執行位置：
