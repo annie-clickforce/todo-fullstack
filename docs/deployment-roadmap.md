@@ -33,6 +33,8 @@ Node.js 只在 build 前端時以暫時容器使用（第 26 步），正式環�
 
 `todo.你的網域.com` 替換成實際網址；`你的彈性IP` 替換成第 16 步取得的 IP。
 
+> **注意**：文件中 AWS 主控台、GoDaddy 的選單與按鈕名稱僅供參考，**不保證位置與名稱跟實際畫面一致**——這些網站經常改版，中英文介面的用詞也不同。找不到時，以文件描述的「要設定什麼」為準，在畫面上找對應的功能。
+
 ## 第一階段：部署上線（網域、HTTPS、Nginx）
 
 目標：把目前版本部署到 AWS EC2，用自己的網域、走 HTTPS、由 Nginx 對外提供服務。以免費或最低成本為原則。
@@ -98,6 +100,8 @@ AWS EC2 主機（Security Group 只開 22／80／443）
 ### 1-2　本機：準備正式版要用的檔案
 
 這一段是在本機寫好幾個新檔案，commit 推上 GitHub，等一下主機再把它們抓下來用。原本開發用的 `Dockerfile`、`docker-compose.yml` 都不動，正式版另外開新檔案。
+
+> **最容易卡住的地方**：整個部署流程中，`Dockerfile.prod`（第 4 步）、`docker-compose.prod.yml`（第 5 步）、Nginx 設定（第 28 步）這三個檔案最容易出錯，所以文件直接提供完整內容。這三份內容已在本機以 Docker 實際建置並測試過（映像檔建置、migration、透過 Nginx 存取 API 與前端路由、Sanctum CSRF Cookie 都正常）。建議先照抄跑通，之後再逐行對照註解理解每一段的用途；若自行修改後出錯，先改回文件內容確認是否為修改造成。
 
 3. 【本機】新增 `backend-laravel/.dockerignore`，告訴 Docker 打包時不要把這些東西放進去：
    ```
@@ -424,6 +428,13 @@ AWS EC2 主機（Security Group 只開 22／80／443）
 33. 【網頁】在正式網址走一次完整流程：註冊 → 登入 → 新增／編輯／勾選／刪除 Todo → 登出 → 重新整理頁面確認被導回登入頁。
     ✔ 驗證：全部正常，DevTools（F12）的 Network 分頁沒有紅色的 419、401、CORS 錯誤。
     如果有某個功能不正常：【本機】用 `docker compose up` 啟動開發版，走一次同樣的流程（也就是 [roadmap.md](roadmap.md) 第 57 步）。本機也壞 → 是程式本身的問題，跟部署無關；本機正常、只有正式網址壞 → 才是部署設定的問題，回頭檢查 `.env`、Nginx 設定。
+
+    > **注意：https 下的登入流程尚未實際測試過。** 本機測試只能用 http，而正式版設定了 `SESSION_SECURE_COOKIE=true`（Cookie 只在 https 傳送），所以註冊／登入要到這一步才會第一次真正驗證。若出現 **419**（CSRF token mismatch）或登入後打 API 回 **401**，多半是網域設定不一致，依序檢查：
+    > 1. 【主機】`cat .env`：`APP_DOMAIN` 必須跟瀏覽器網址列的網域**完全一致**——不含 `https://`、結尾沒有 `/`、沒有多餘空白。`SESSION_DOMAIN`、`SANCTUM_STATEFUL_DOMAINS`、`CORS_ORIGIN` 都是從它產生的，改這一個就好。
+    > 2. 【主機】改過 `.env` 後要執行 `docker compose up -d`，讓 api 容器用新設定重新建立；只改檔案不會生效。可用 `docker compose exec api printenv SANCTUM_STATEFUL_DOMAINS` 確認容器內的值。
+    > 3. 【主機】確認第 26 步 build 前端時填的 `VITE_API_BASE_URL` 是 `https://` 開頭、網域相同。填錯要重做第 26 步（重新 build 並複製到 `/var/www/todo`）。
+    > 4. 【網頁】DevTools → Application → Cookies 刪除該網域的所有 Cookie，重新整理後再試一次，避免舊 Cookie 干擾。
+    > 5. 【主機】仍然失敗時，看 Laravel log 找錯誤訊息（看法見第 48 步），並把錯誤訊息記下來排查。
 34. 【網頁】檢查 Cookie 的安全設定：DevTools → Application → Cookies → 選你的網域。
     ✔ 驗證：`laravel_session` 的 `HttpOnly` 和 `Secure` 都有打勾；`XSRF-TOKEN` 的 `Secure` 有打勾。
 35. 【網頁】確認錯誤畫面不會洩漏程式細節：打開 `https://todo.你的網域.com/api/v1/不存在的路徑`。
@@ -446,7 +457,7 @@ AWS EC2 主機（Security Group 只開 22／80／443）
 
 ### 1-9　寫下部署文件
 
-40. 【本機】新增 `docs/deployment.md`，記錄這次學到、之後會重複用到的東西（**不要寫密碼**）：
+40. 【本機】填寫 [deployment.md](deployment.md)（檔案已建立，目前為空白），記錄這次學到、之後會重複用到的東西（**不要寫密碼**）：
     - 主機資訊：區域、執行個體名稱、網域、SSH 登入指令。
     - 「怎麼更新版本」的步驟：
       1. 【本機】改完程式、commit、push。
@@ -537,7 +548,7 @@ AWS EC2 主機（Security Group 只開 22／80／443）
        ```
     5. 【主機】`docker compose start api`，停止計時。
     ✔ 驗證：【網頁】重新整理網站，被刪掉的 Todo 都回來了。記下這次花了幾分鐘（RTO），以及如果是靠每天的自動備份，最多會遺失多少資料（RPO）。
-47. 【本機】新增 `docs/operations.md`，把第 45、46 步寫成「資料庫還原 SOP」：出事時照著一步一步做就能還原，不需要臨時查資料。
+47. 【本機】在 [operations.md](operations.md)（檔案已建立，目前為空白）中，把第 45、46 步寫成「資料庫還原 SOP」：出事時照著一步一步做就能還原，不需要臨時查資料。
 
 ### 2-3　看 log 除錯
 
@@ -575,7 +586,7 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     - **429 Too Many Requests**：【網頁】連續登入失敗 6 次 → 【主機】access.log 看到同一個 IP 連續幾行 `POST /api/v1/auth/login`，最後是 429。
     ✔ 驗證：四個情境都能說出「看到什麼 → 查哪裡 → 原因是什麼」，而且網站最後都恢復正常。
 51. （可選）讓 Nginx 幫每個請求加上一個編號（request id），傳給 Laravel 一起寫進 log。這樣從 access.log 看到某一行有問題時，可以用同一個編號在 Laravel log 裡找到對應的錯誤。
-52. 【本機】把第 48～50 步整理進 `docs/operations.md`：每一層 log 在哪、怎麼看，以及每個除錯情境的「現象 → 查哪裡 → 原因 → 解法」。這份文件就是這階段的成果紀錄。
+52. 【本機】把第 48～50 步整理進 [operations.md](operations.md)：每一層 log 在哪、怎麼看，以及每個除錯情境的「現象 → 查哪裡 → 原因 → 解法」。這份文件就是這階段的成果紀錄。
 
 ### 收尾
 

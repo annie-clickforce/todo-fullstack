@@ -35,6 +35,8 @@
 - [系統架構圖](docs/architecture.md)
 - [開發路線圖](docs/roadmap.md)
 - [部署上線與維運路線圖](docs/deployment-roadmap.md)（部署到 AWS、網域、HTTPS、Nginx，以及資料庫備份還原、看 log 除錯）
+- [部署文件](docs/deployment.md)
+- [維運文件](docs/operations.md)
 
 ## 啟動專案
 
