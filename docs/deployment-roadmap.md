@@ -33,6 +33,8 @@ Node.js 只在 build 前端時以暫時容器使用（第 26 步），正式環�
 
 `todo.你的網域.com` 替換成實際網址；`你的彈性IP` 替換成第 16 步取得的 IP。
 
+SSH 登入主機後，要把文件中的指令或設定內容貼進去時：先在文件中複製，再到 PowerShell 視窗**按滑鼠右鍵**即可貼上（不是 `Ctrl+V`）。在 `nano` 編輯器裡也是按右鍵貼上。
+
 > **注意**：文件中 AWS 主控台、GoDaddy 的選單與按鈕名稱僅供參考，**不保證位置與名稱跟實際畫面一致**——這些網站經常改版，中英文介面的用詞也不同。找不到時，以文件描述的「要設定什麼」為準，在畫面上找對應的功能。
 
 ## 第一階段：部署上線（網域、HTTPS、Nginx）
@@ -240,7 +242,8 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     ✔ 驗證：登出再登入，除了密碼還要輸入手機上的 6 位數字。
 12. 【網頁】建立一個 IAM 使用者給自己日常用（IAM → 使用者 → 建立使用者，權限先給 `AdministratorAccess`），之後都用這個帳號登入，root 帳號收起來不用。也幫這個使用者開 MFA。
     （原因：root 權限大到可以關掉整個帳號，萬一密碼外洩後果最嚴重。）
-    ✔ 驗證：用 IAM 使用者登入主控台成功。
+    **IAM 使用者要用專屬的登入網址**，不能從一般的 AWS 登入頁用 email 登入。建立使用者完成時畫面會顯示「主控台登入 URL」（格式像 `https://帳號ID.signin.aws.amazon.com/console`），記下來或加入書籤；之後也可以在 IAM 主控台首頁找到。
+    ✔ 驗證：用這個網址，以 IAM 使用者登入主控台成功。
 13. 【網頁】設定預算警示：Billing → Budgets → 建立預算，選「成本預算」，金額填 US$5，警示寄到自己的 email。
     ✔ 驗證：Budgets 列表看得到這筆預算。順便到 Billing 的 Free plan 頁面看剩多少抵用金、還有哪些任務可以做（做完會再送抵用金）。
 
@@ -252,18 +255,21 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     - 執行個體類型：**t3.micro**（確認旁邊有標示符合免費方案）
     - 金鑰對：點「建立新的金鑰對」，名稱 `todo-key`，類型 RSA，格式 `.pem`，下載下來**放到安全的地方並備份**（AWS 只讓你下載這一次）
     - 儲存：改成 **20 GiB、gp3**
-    - 網路設定先用預設，下一步再調防火牆
+    - 網路設定（防火牆／安全群組）：選「建立安全群組」，勾選：
+      - 「允許 SSH 流量」，來源改成**我的 IP**（預設是任何地方，要改掉）
+      - 「允許來自網際網路的 HTTPS 流量」
+      - 「允許來自網際網路的 HTTP 流量」
     ✔ 驗證：執行個體列表看到 `todo-server`，狀態是「執行中」。
-15. 【網頁】設定 Security Group（防火牆）的「傳入規則」，只留這三條：
+15. 【網頁】確認 Security Group（防火牆）的傳入規則：EC2 → 執行個體 → 點 `todo-server` → 下方「安全」頁籤 → 點安全群組名稱 →「傳入規則」。應該剛好是這三條：
     | 類型 | Port | 來源 | 用途 |
     |---|---|---|---|
-    | SSH | 22 | 我的 IP | 只有你自己能遠端登入 |
+    | SSH | 22 | 我的 IP | 只有自己能遠端登入 |
     | HTTP | 80 | 0.0.0.0/0（所有人） | 網站 http |
     | HTTPS | 443 | 0.0.0.0/0（所有人） | 網站 https |
 
-    **不要**開 5432、9000、3010、3011。
-    **注意**：家裡、公司、咖啡廳的 IP 都不一樣，而且可能會變。之後 SSH 突然連不上，第一件事先回來把「我的 IP」更新一次。
-    ✔ 驗證：Security Group 的傳入規則剛好就是上面三條。
+    不對的話按「編輯傳入規則」修改。**不要**開 5432、9000、3010、3011。
+    **注意**：家裡、公司、咖啡廳的 IP 都不一樣，而且可能會變。之後 SSH 突然連不上，第一件事先回到這個畫面，把 SSH 規則的來源重新選一次「我的 IP」。
+    ✔ 驗證：傳入規則剛好就是上面三條。
 16. 【網頁】申請固定 IP：EC2 → 彈性 IP → 配置彈性 IP 地址 → 選剛剛那筆 → 動作 →「關聯彈性 IP 地址」到 `todo-server`。把這個 IP 記下來，後面會一直用到。
     ✔ 驗證：執行個體詳細資料裡的「公有 IPv4 地址」就是這個彈性 IP。
 17. 【網頁】設定 DNS：到 GoDaddy 的網域 → DNS 管理，新增一筆記錄：
@@ -291,6 +297,7 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     ```bash
     sudo apt update && sudo apt upgrade -y
     ```
+    過程中如果跳出紫色（或粉紅色）的選單，詢問要重啟哪些服務（Which services should be restarted?），不是當機，直接按 Enter 使用預設選項即可。
     ✔ 驗證：指令跑完沒有紅字錯誤。如果提示要重開機，執行 `sudo reboot`，等一分鐘再照第 18 步 SSH 連回來。
 20. 【主機】加 2GB swap（記憶體不夠用時，拿一塊硬碟空間暫時頂著用；t3.micro 只有 1GB 記憶體，跑 Docker build 很容易不夠）：
     ```bash
@@ -338,9 +345,10 @@ AWS EC2 主機（Security Group 只開 22／80／443）
 25. 【主機】啟動後端和資料庫，並建立資料表（因為 `.env` 裡有 `COMPOSE_FILE`，這裡的 `docker compose` 會自動用正式版設定檔）：
     ```bash
     docker compose up -d --build
-    docker compose exec api php artisan migrate --force
+    docker compose exec -u www-data api php artisan migrate --force
     ```
     第一次 build 在 t3.micro 上約需數分鐘。`APP_ENV=production` 時 Laravel 預設拒絕執行 migration，需加 `--force`。
+    **`-u www-data` 一定要加**：`docker compose exec` 預設以 root 身分執行，若過程中 Laravel 寫了 log，當天的 log 檔會變成 root 擁有，之後 php-fpm（以 www-data 身分執行）就寫不進去——網站本身照常運作，但**之後發生的錯誤都不會被記錄**，出問題時查 log 會什麼都找不到。之後所有 `php artisan` 指令都要加 `-u www-data`。
     ✔ 驗證：`docker compose ps` 看到 `api`、`db` 都是 `Up`（db 會顯示 `healthy`）；`docker compose logs api` 最後幾行沒有 ERROR。
 26. 【主機】build 前端，並放到 Nginx 等一下要讀的位置。主機上沒有裝 Node，所以借用一個暫時的 Node 容器來 build，build 完容器會自動刪掉：
     ```bash
@@ -408,7 +416,7 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     sudo apt install -y certbot python3-certbot-nginx
     ```
     ✔ 驗證：`certbot --version` 印出版本號。
-31. 【主機】申請憑證：
+31. 【主機】申請憑證。**先確認第 17 步的 DNS 已經生效**（【本機】`nslookup todo.你的網域.com` 回傳你的彈性 IP），否則 Let's Encrypt 找不到你的主機，申請會失敗：
     ```bash
     sudo certbot --nginx -d todo.你的網域.com
     ```
@@ -444,6 +452,7 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     Test-NetConnection todo.你的網域.com -Port 5432
     Test-NetConnection todo.你的網域.com -Port 9000
     ```
+    每個指令要等約 20 秒才會出結果，過程中顯示黃色的 `WARNING: TCP connect ... failed` 是正常的——這正是「連不到」的意思。
     ✔ 驗證：兩個的 `TcpTestSucceeded` 都是 `False`。
 37. 【本機】確認密碼沒有進 git：
     ```powershell
@@ -463,7 +472,7 @@ AWS EC2 主機（Security Group 只開 22／80／443）
       1. 【本機】改完程式、commit、push。
       2. 【主機】`cd ~/todo-fullstack && git pull`
       3. 【主機】`docker compose up -d --build`
-      4. 【主機】`docker compose exec api php artisan migrate --force`
+      4. 【主機】`docker compose exec -u www-data api php artisan migrate --force`
       5. 前端有改的話，重做第 26 步。
     - 這次踩過的坑和解法。
     ✔ 驗證：之後要更新版本時，照著這份文件就能完成，不用再翻其他資料。
