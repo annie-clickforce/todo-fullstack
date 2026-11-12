@@ -330,11 +330,11 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
 
 ### 1-4　hPanel 設定：子網域、DNS、HTTPS、PHP、資料庫、SSH
 
-10. 【網頁】建立子網域並設定 DNS：
-    1. hPanel → 網域 → **子網域（Subdomains）**，建立 `todo`。如果有「自訂資料夾」選項，資料夾填 `todo`。建立後畫面會顯示這個子網域的資料夾路徑，記到 `deployment-info.md`。
-    2. hPanel 的方案或網站資訊頁找到**主機 IP（IP address）**，記到 `deployment-info.md`。
-    3. 到 GoDaddy → 網域 → DNS 管理，新增一筆記錄：類型 `A`、名稱 `todo`、值填 `你的主機IP`、TTL 用預設。
-    ✔ 驗證：等幾分鐘到幾小時，【本機】執行 `nslookup todo.你的網域.com`，回傳的 Address 是 `你的主機IP`。
+10. ✅️ 【網頁】建立子網域並設定 DNS：
+    1. 建立子網域：子網域不在 hPanel 最左邊的 Domains 裡，要先進網站的管理頁——左邊選單 **Websites** → 網站卡片下方的 **Manage site**（卡片上紅色的「Connect」、管理頁上的「Continue setup」都是改 Nameserver 的引導，不要按）→ 網站專屬選單的 **Domains → Subdomains**。Subdomain 填 `todo`、Domains 保持主網域，「Custom folder for subdomain」不用勾（預設就會建 `todo` 資料夾），按 Create。下方「List of Current Subdomains」會顯示資料夾路徑（像 `/home/u123456789/domains/你的網域.com/public_html/todo`），記到 `deployment-info.md`。
+    2. 主機 IP：第 4 步建立網站時「Connect via DNS records」頁顯示的 A 記錄值就是主機 IP；如果當時沒記，也可以在 hPanel 的方案或網站資訊頁找 **IP address**。記到 `deployment-info.md`。
+    3. 到 GoDaddy →「我的產品」→ 網域 → **DNS**（DNS 記錄分頁）→「新增記錄」：類型 `A`、名稱 `todo`、內容值填 `你的主機IP`、TTL 用預設，按「儲存」。原本就有的記錄（例如 `@` 的 Parked、NS 記錄）都不要動，也不要改 Nameserver。
+    ✔ 驗證：等幾分鐘到幾小時，【本機】執行 `nslookup todo.你的網域.com`，回傳的 Address 是 `你的主機IP`。剛查過時本機可能還留著「Non-existent domain」的舊快取，可以改用 `nslookup todo.你的網域.com 8.8.8.8`（指定 Google DNS）確認。
 11. 【網頁】設定 HTTPS（DNS 生效後才能申請）：hPanel → 安全性 → **SSL**，替 `todo.你的網域.com` 安裝免費 SSL；然後開啟「**強制 HTTPS（Force HTTPS）**」。
     ✔ 驗證：瀏覽器打開 `http://todo.你的網域.com` 會自動跳到 `https://`，網址列有鎖頭（這時頁面內容可能是 Hostinger 的預設頁，正常）。
 12. 【網頁】設定 PHP 與資料庫：
