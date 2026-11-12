@@ -72,7 +72,7 @@
 
 - 正式環境需設定 `NODE_ENV=production`，作為上面全域錯誤處理器之外多一層防護。
 - `POST /auth/register` 的 `name`／`email` 目前沒有後端長度驗證，超過資料庫欄位長度時會被 DB 擋下、回傳 `500`，語意上應該回 `422`。
-- 登入／註冊端點沒有速率限制（rate limiting），有暴力破解風險。
+- ✅️ 登入／註冊端點沒有速率限制（rate limiting），有暴力破解風險。（Laravel 版已加上：同一個 IP 每分鐘最多 5 次，見 [deployment-roadmap.md](deployment-roadmap.md) 第 8 步。）
 - Session Cookie 目前沒設定 `secure`／`sameSite`（本機 http 開發環境本來就不該設 `secure:true`）；若之後部署到正式環境（https），`express-session` 的 cookie 需加上 `secure: true`。
 
 ## ✅️ 第七階段：後端改用 Laravel 8 重構（MVP 完成後新增需求）

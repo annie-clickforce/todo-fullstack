@@ -48,4 +48,14 @@ class Handler extends ExceptionHandler
     {
         return response()->json(['message' => 'Unauthorized'], 401);
     }
+
+    /**
+     * API routes always get JSON errors (e.g. 429 Too Many Attempts, 404, 500),
+     * even when the client doesn't send "Accept: application/json". Otherwise
+     * Laravel renders an HTML error page and the frontend can't read the message.
+     */
+    protected function shouldReturnJson($request, Throwable $e)
+    {
+        return $request->is('api/*') || parent::shouldReturnJson($request, $e);
+    }
 }

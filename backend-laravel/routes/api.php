@@ -20,8 +20,9 @@ Route::prefix('v1')->group(function () {
         return response()->json(['status' => 'ok']);
     });
 
-    Route::post('/auth/register', [AuthController::class, 'register']);
-    Route::post('/auth/login', [AuthController::class, 'login']);
+    // 速率限制：同一個 IP 每 1 分鐘最多 5 次；第三個參數是計數器前綴，讓註冊、登入各自計算
+    Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:5,1,register');
+    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1,login');
     Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 

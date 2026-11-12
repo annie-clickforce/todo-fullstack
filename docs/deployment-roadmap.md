@@ -280,17 +280,19 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
    ✔ 驗證：全部正常；用 DBeaver 新增一個 **MySQL** 連線（主機 `localhost`、Port `3306`（如果第 6 步改過 `MYSQL_PORT`，就填改過的值，例如 `3307`）、資料庫 `todo_app`、帳號 `todo_app`、密碼 `change-me`），看得到 `users`、`todos` 裡剛剛建立的資料。
    改完並確認正常後，`README.md` 技術列表中 MySQL 那行的「改用中」註記就可以拿掉；`docs/database.md`、`docs/architecture.md`、`CLAUDE.md` 裡寫 PostgreSQL 的地方也改成 MySQL。
 
-8. 【本機】幫登入、註冊加上速率限制，避免有人一直猜密碼（順便解掉 [roadmap.md](roadmap.md)「範圍之外」的速率限制項目）。在 `backend-laravel/routes/api.php` 把這兩行：
+8. ✅️ 【本機】幫登入、註冊加上速率限制，避免有人一直猜密碼（順便解掉 [roadmap.md](roadmap.md)「範圍之外」的速率限制項目）。在 `backend-laravel/routes/api.php` 把這兩行：
    ```php
    Route::post('/auth/register', [AuthController::class, 'register']);
    Route::post('/auth/login', [AuthController::class, 'login']);
    ```
-   改成（`throttle:5,1` 意思是「同一個 IP 每 1 分鐘最多 5 次」）：
+   改成：
    ```php
-   Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
-   Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+   // 速率限制：同一個 IP 每 1 分鐘最多 5 次；第三個參數是計數器前綴，讓註冊、登入各自計算
+   Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:5,1,register');
+   Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1,login');
    ```
-   ✔ 驗證：本機開發版連續用錯誤密碼登入 6 次，第 6 次回傳 `429 Too Many Requests`。等一分鐘後又可以登入。
+   `throttle:5,1,login` 的意思是「同一個 IP 每 1 分鐘最多 5 次，計數器名稱叫 login」。第三個參數不能省略：沒加的話，Laravel 會用「網域＋IP」當計數的 key，註冊和登入就會**共用同一個計數器**（例如註冊 3 次後只剩 2 次可以登入）。
+   ✔ 驗證：本機開發版連續用錯誤密碼登入 6 次，前 5 次回 `401`，第 6 次回傳 `429 Too Many Requests`（前端畫面會顯示「Too Many Attempts.」）；這時註冊不受影響。等一分鐘後又可以登入。
 9. 【本機】新增網站根目錄要用的兩個檔案，放在 `deploy/hostinger/`（進 git，等一下 SSH 上直接複製過去）：
 
    `deploy/hostinger/.htaccess`：
