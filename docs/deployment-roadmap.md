@@ -33,6 +33,8 @@ Node.js 只在 build 前端時以暫時容器使用（第 26 步），正式環�
 
 `todo.你的網域.com` 替換成實際網址；`你的彈性IP` 替換成第 16 步取得的 IP。
 
+遇到錯誤時，先查文件最後的「[常見錯誤速查](#常見錯誤速查)」。
+
 SSH 登入主機後，要把文件中的指令或設定內容貼進去時：先在文件中複製，再到 PowerShell 視窗**按滑鼠右鍵**即可貼上（不是 `Ctrl+V`）。在 `nano` 編輯器裡也是按右鍵貼上。
 
 > **注意**：文件中 AWS 主控台、GoDaddy 的選單與按鈕名稱僅供參考，**不保證位置與名稱跟實際畫面一致**——這些網站經常改版，中英文介面的用詞也不同。找不到時，以文件描述的「要設定什麼」為準，在畫面上找對應的功能。
@@ -279,14 +281,14 @@ AWS EC2 主機（Security Group 只開 22／80／443）
 
     DNS 生效需要數分鐘到數小時，可先進行下一步。
     ✔ 驗證：【本機】執行 `nslookup todo.你的網域.com`，回傳的 Address 是你的彈性 IP。還沒生效就晚點再試。
-18. 【本機】第一次 SSH 登入主機。Windows 會擋權限太寬鬆的 .pem 檔，所以先把它的權限改成「只有自己能讀」（路徑換成你放 .pem 的位置）：
+18. 【本機】第一次 SSH 登入主機。Windows 會擋權限太寬鬆的 .pem 檔，所以先把它的權限改成「只有自己能讀」（路徑換成你放 .pem 的位置；**路徑前後的雙引號要保留**，路徑中有空格時才不會出錯）：
     ```powershell
-    icacls C:\路徑\todo-key.pem /inheritance:r
-    icacls C:\路徑\todo-key.pem /grant:r "$($env:USERNAME):(R)"
+    icacls "C:\路徑\todo-key.pem" /inheritance:r
+    icacls "C:\路徑\todo-key.pem" /grant:r "$($env:USERNAME):(R)"
     ```
     然後登入：
     ```powershell
-    ssh -i C:\路徑\todo-key.pem ubuntu@你的彈性IP
+    ssh -i "C:\路徑\todo-key.pem" ubuntu@你的彈性IP
     ```
     第一次會問要不要信任這台主機，輸入 `yes`。
     ✔ 驗證：看到 `ubuntu@ip-xxx-xxx-xxx-xxx:~$` 這樣的提示字元，表示已登入主機，之後【主機】的步驟都在這裡執行。輸入 `exit` 離開。
@@ -408,6 +410,7 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     - 【網頁】打開 `http://todo.你的網域.com`，看到 Todo 的登入頁。
     - 【網頁】打開 `http://todo.你的網域.com/api/v1/health`，看到 `{"status":"ok"}`。
     - 這時候還**不能登入**是正常的：`SESSION_SECURE_COOKIE=true` 要求 https 才送 Cookie，下一段裝好 HTTPS 就會好。
+    - DevTools 的 Console 若出現紅色的連線錯誤（例如 `ERR_CONNECTION_REFUSED`）也是正常的：前端 build 時設定的 API 網址是 `https://`，而 https 要到下一段才會設定好。
 
 ### 1-7　設定 HTTPS（免費的 Let's Encrypt）
 
@@ -515,18 +518,19 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     # 刪掉 7 天以前的備份檔
     find /home/ubuntu/backups -name 'todo_*.dump' -mtime +7 -delete
     ```
-    commit、push，然後【主機】`git pull` 抓下來，再執行 `chmod +x scripts/backup.sh` 讓它可以執行。
-    ✔ 驗證：【主機】手動跑一次 `./scripts/backup.sh`，印出「備份完成」，`ls ~/backups` 多了一個帶日期時間的檔案。
+    commit、push，然後【主機】`git pull` 抓下來。
+    之後一律用 `bash scripts/backup.sh` 執行，**不要**在主機上執行 `chmod +x`：chmod 會讓 git 認為主機上的檔案被修改過，之後這支腳本有更新時，`git pull` 會因為「本機有修改」而失敗。
+    ✔ 驗證：【主機】手動跑一次 `bash scripts/backup.sh`，印出「備份完成」，`ls ~/backups` 多了一個帶日期時間的檔案。
 43. 【主機】設定 cron 每天自動備份。執行 `crontab -e`（第一次會問要用哪個編輯器，選 `nano`），在最下面加一行：
     ```
-    0 19 * * * /home/ubuntu/todo-fullstack/scripts/backup.sh >> /home/ubuntu/backups/backup.log 2>&1
+    0 19 * * * /bin/bash /home/ubuntu/todo-fullstack/scripts/backup.sh >> /home/ubuntu/backups/backup.log 2>&1
     ```
     格式說明：前五個欄位依序是「分 時 日 月 星期」，`0 19 * * *` 就是每天 19:00。**主機用的是 UTC 時間，UTC 19:00 等於台灣凌晨 3:00**。後面是要執行的腳本，`>> backup.log 2>&1` 是把執行結果（包括錯誤）記到 `backup.log`，出問題時才查得到原因。
     ✔ 驗證：`crontab -l` 看得到這一行；隔天檢查 `ls ~/backups` 有新檔案、`cat ~/backups/backup.log` 有「備份完成」。
 44. 【本機】把備份抓回自己電腦（異地備份）。備份檔跟資料庫放在同一台主機上，主機壞掉就一起不見了，所以要另外存一份：
     ```powershell
     mkdir C:\todo-backups
-    scp -i C:\路徑\todo-key.pem "ubuntu@你的彈性IP:~/backups/todo_*.dump" C:\todo-backups\
+    scp -i "C:\路徑\todo-key.pem" "ubuntu@你的彈性IP:~/backups/todo_*.dump" C:\todo-backups\
     ```
     ✔ 驗證：`C:\todo-backups` 裡有備份檔。建議每週抓一次，或 Demo 前抓一次。
 
@@ -548,7 +552,7 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     ```
     確認完把測試資料庫刪掉：`docker compose exec db dropdb -U todo_app todo_restore_test`。
 46. 【網頁＋主機】模擬事故並還原正式資料庫：
-    1. 【主機】先跑一次 `./scripts/backup.sh`，記下這次的檔名。
+    1. 【主機】先跑一次 `bash scripts/backup.sh`，記下這次的檔名。
     2. 【網頁】在網站上記下目前有哪些 Todo，然後刪掉其中幾筆（假裝是誤刪）。
     3. 【主機】開始計時。先停掉 api，避免還原時有人在寫入資料：`docker compose stop api`
     4. 【主機】還原（`--clean --if-exists` 是「先把現有的資料表清掉再放回備份內容」）：
@@ -605,3 +609,22 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     - EC2 → 快照、磁碟區：如果有留下來的也刪掉。
     務必在 Free plan 的 6 個月期限前處理完。
     ✔ 驗證：EC2 主控台裡執行個體、彈性 IP、磁碟區都是空的；Billing 頁面不再有新增費用。
+
+## 常見錯誤速查
+
+| 現象 | 常見原因 | 處理方式 |
+|---|---|---|
+| SSH 一直沒反應，最後 `Connection timed out` | 自己的 IP 變了，被安全群組擋住 | 照第 15 步，把 SSH 規則的來源重新選一次「我的 IP」 |
+| SSH 出現 `Permission denied (publickey)` | .pem 路徑錯誤，或使用者名稱打錯 | 確認 `-i` 後面的 .pem 路徑正確（有加雙引號）、使用者是 `ubuntu` |
+| SSH 出現 `UNPROTECTED PRIVATE KEY FILE` | .pem 檔權限太寬鬆 | 重做第 18 步的兩行 `icacls` |
+| `docker` 指令出現 `permission denied ... docker.sock` | 第 21 步加入 docker 群組後沒有重新登入 | `exit` 後重新 SSH 登入 |
+| `docker compose` 出現 `no configuration file provided` | 不在專案資料夾裡 | 先 `cd ~/todo-fullstack` |
+| `git pull` 出現 `Your local changes ... would be overwritten` | 主機上改過被 git 管理的檔案 | `git status` 看是哪個檔案，用 `git checkout -- 檔名` 還原後再 `git pull` |
+| `sudo nginx -t` 失敗 | 設定檔打錯字、少了分號或大括號 | 錯誤訊息會標出檔案與行數，`sudo nano /etc/nginx/sites-available/todo` 對照第 28 步修正 |
+| 網站出現 502 Bad Gateway | api 容器沒有在執行 | `docker compose ps` 確認狀態，`docker compose logs api` 看原因，`docker compose up -d` 重新啟動 |
+| 網站出現 500 Server Error | Laravel 程式或設定出錯（常見是資料庫連線） | 看 Laravel log（第 48 步），找 `ERROR` 那幾行 |
+| 登入出現 419 或登入後 401 | 網域設定不一致 | 照第 33 步的排查清單檢查 |
+| certbot 申請失敗 | DNS 尚未生效，或 80 port 沒開 | 【本機】`nslookup` 確認 IP 正確；確認安全群組有開 HTTP 80 |
+| 網站完全打不開（連不上） | DNS 尚未生效、安全群組沒開 80／443、Nginx 沒在執行 | 依序檢查 `nslookup`、安全群組、`sudo systemctl status nginx` |
+
+上表找不到的錯誤：把完整錯誤訊息複製下來，記錄當時執行的步驟與指令，再搜尋或詢問。
