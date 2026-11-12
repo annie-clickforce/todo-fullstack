@@ -293,6 +293,7 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
    ```
    `throttle:5,1,login` 的意思是「同一個 IP 每 1 分鐘最多 5 次，計數器名稱叫 login」。第三個參數不能省略：沒加的話，Laravel 會用「網域＋IP」當計數的 key，註冊和登入就會**共用同一個計數器**（例如註冊 3 次後只剩 2 次可以登入）。
    ✔ 驗證：本機開發版連續用錯誤密碼登入 6 次，前 5 次回 `401`，第 6 次回傳 `429 Too Many Requests`（前端畫面會顯示「Too Many Attempts.」）；這時註冊不受影響。等一分鐘後又可以登入。
+   > 如果畫面顯示的是「Request failed」而不是「Too Many Attempts.」：代表 Laravel 回了 HTML 錯誤頁，前端讀不到訊息。前端送請求時沒有帶 `Accept: application/json`，Laravel 遇到 429 這類錯誤就會回 HTML。已在 `backend-laravel/app/Exceptions/Handler.php` 覆寫 `shouldReturnJson()`，讓 `/api/*` 的錯誤一律回 JSON。
 9. 【本機】新增網站根目錄要用的兩個檔案，放在 `deploy/hostinger/`（進 git，等一下 SSH 上直接複製過去）：
 
    `deploy/hostinger/.htaccess`：
