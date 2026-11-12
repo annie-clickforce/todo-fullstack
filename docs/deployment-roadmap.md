@@ -108,13 +108,15 @@ Laravel 程式碼放在家目錄 `~/todo-fullstack`，**不在網站根目錄裡
 1. ✅️ 【網頁】到 GoDaddy 搜尋並購買網域：
    - 年限只選 **1 年**。
    - 結帳頁取消所有加購（SSL 憑證、專業信箱、網站建置等）；網域隱私保護如果是免費附贈就保留。
-   - 買完到帳戶的網域設定裡，把**自動續約關掉**。
    - **到信箱點驗證信**：新註冊的網域通常會寄一封「驗證網域聯絡人 email」的信（寄件者是 GoDaddy 或網域註冊管理機構，也檢查垃圾郵件匣）。期限內沒點，網域可能被暫停解析，屆時網站會突然打不開，而且跟主機設定無關。
    ✔ 驗證：GoDaddy「我的產品」裡看得到這個網域；驗證信已點擊確認，網域設定頁沒有出現「待驗證」之類的警告。
+
+   ⚠️ **關閉自動續約（尚未完成）**：GoDaddy「我的產品」→ 點這個網域 →「註冊設定」分頁，或右上角帳號選單 →「續約與帳單」，把**自動續約關掉**；挽留優惠一律拒絕。到期日前一定要關，否則會照原價自動扣款。
+   ✔ 驗證：網域的自動續約顯示關閉，`deployment-info.md` 對應的子項目打勾。
 2. ✅️ 決定網址：建議用子網域 `todo.你的網域.com`，之後這個網域還能拿來放別的東西。把完整網址記下來，後面所有 `todo.你的網域.com` 都換成它。
    （DNS 設定要先拿到主機的 IP，所以放在第 10 步才做。）
 
-### 1-2　買 Hostinger 主機方案
+### ✅️ 1-2　買 Hostinger 主機方案
 
 3. ✅️ 【網頁】到 Hostinger 官網 → 虛擬主機（Web Hosting），購買 **Premium** 方案：
    - **買 Premium，不要買 Single**：Laravel 上線要用 SSH 執行 `composer install`、`php artisan migrate`，Hostinger 官方說明 SSH 只有 **Premium 以上**才有。目前官網上最便宜的就是 Premium；如果你看到的頁面有更便宜的 **Single**，那個沒有 SSH，不要買。
@@ -124,14 +126,23 @@ Laravel 程式碼放在家目錄 `~/todo-fullstack`，**不在網站根目錄裡
    - **付款完成後還會出現加購推銷頁**（例如 Hostinger Agent AI 工具，按 Skip 之後還會再降價推一次，像「First month: $0.10」）。這些頁面寫著「Uses the payment method from your order. No forms, no second checkout.」，意思是**按「Add to my order」或「Claim」就會直接用剛剛的卡扣款**，而且之後自動續約。每一頁都只按卡片底下的灰色小字 **「Skip offer」**，直到出現「Order complete」頁，再按「Go to hPanel」。
    - Premium 附贈 1 年免費網域，但網域已經在 GoDaddy 買了，**不用領**，之後 hPanel 提示「領取免費網域」時跳過即可。hPanel 首頁的「Claim your free email」、「Claim your free email marketing plan」也不要按，領了可能多出會續約的訂閱。
    - 不確定時可以問右下角的線上客服：「Premium 方案有 SSH 嗎？可以用 Composer、Git，PHP 可以選 8.1 嗎？」
-   ✔ 驗證：信箱收到的收據只有 Premium 一項；hPanel 右上角人像圖示 → **Billing** → **Subscriptions** 只有一筆 **Premium Web Hosting**，沒有 Hostinger Agent、信箱之類的其他訂閱。方案名稱與到期日記到 `deployment-info.md`。（自動續約在第 4 步做完後再關。）
-4. 【網頁】設定網站，再關閉自動續約：
-   1. 建立網站：hPanel 第一次登入時會跳出建立網站的引導（或 Billing → Subscriptions 那筆旁邊的黃色 **Set up**、首頁待辦的「Continue creating or migrating a website」→ **Continue**，都是同一個引導）。選「**我已經有網域**」（或「使用現有網域」），輸入 `你的網域.com`（主網域，不含 `todo.`）。如果引導要你選 WordPress 或網站建置工具，**跳過或選空白網站**，這個專案不需要。引導最後如果要你改 Nameserver 或 DNS，**先不要動 GoDaddy**，DNS 在第 10 步只加一筆 A 記錄。首頁上方「Connect a domain」那個輸入框是 AI Agent 對話框，不要用。
-   2. 關閉自動續約：右上角人像圖示 → **Billing** → **Subscriptions** → Premium 那筆按 **Manage**。訂閱還是 **Pending setup** 狀態時，面板裡**沒有自動續約開關**，只有「Cancel subscription」，所以要先做完上一步，讓狀態變成 Active，再回來看有沒有 Auto-renewal 開關。
-      - 有開關：直接關掉。跳出挽留優惠（例如改成 12 個月享折扣）一律拒絕。
-      - 還是沒有開關：才按 **Cancel subscription**。過程中會問原因、推挽留優惠，一定要選「**到期後才取消**」（關閉自動續約、可以用到到期日），**不要選「立即取消」**，否則主機會馬上停用。沒把握的話，先問線上客服：「I want to turn off auto-renewal but keep using the plan until the expiration date. How do I do that?」
-   3. 在行事曆設一個到期日前一週的提醒，再確認一次自動續約真的關了。
-   ✔ 驗證：hPanel 的網站列表看得到 `你的網域.com`；Billing → Subscriptions 那筆 Premium 的 Billing date 從「Auto-renews」變成「Expires」（或類似字樣），Manage 面板不再顯示「Subscription renews automatically」。
+   ✔ 驗證：信箱收到的收據只有 Premium 一項；hPanel 右上角人像圖示 → **Billing** → **Subscriptions** 只有一筆 **Premium Web Hosting**，沒有 Hostinger Agent、信箱之類的其他訂閱。方案名稱與到期日記到 `deployment-info.md`。（自動續約見第 4 步最後的 ⚠️ 項目。）
+4. ✅️ 【網頁】設定網站：hPanel → 右上角人像圖示 → **Billing** → **Subscriptions** → Premium 那筆旁邊黃色的 **Set up**（hPanel 第一次登入跳出的引導、首頁待辦的「Continue creating or migrating a website」也是同一個引導）。依序選：
+   1. 問要「Continue setup」還是「Start over」：選 **Start over**，從頭確認每個選項。
+   2. AI 對話式引導頁：按右上角 **Set up manually**。
+   3. Where would you like to start：選 **Create a new site**。
+   4. How do you want to build your website：選最下面的 **Upload your PHP or HTML**（For advanced users）。不要選 AI 建站、WordPress，也不要選「Push your code」（那是給 Node.js／靜態網站用的，Laravel 要跑在 PHP 上）。
+   5. 網域：輸入 `你的網域.com`（主網域，不含 `todo.`），點下拉選單第一行右邊的「**Do you own this domain? Use it**」。下面其他標價格的網域都不要點。出現黃色提示「This domain is registered at another provider」是正常的，按 Next。
+   6. How do you want to set up your website：選 **Start empty**（不要選 Upload website files，前端檔案在第 18～20 步才放）。
+   7. 機房位置：保持預設的 **Malaysia**（離台灣最近），按 Next，等它建立網站。
+   8. 「Point your domain to Hostinger」頁：**不要改 Nameserver，也不要照著設 `@`、`www` 的記錄**，DNS 留在 GoDaddy，第 10 步只加一筆 `todo` 的 A 記錄。可以先切到「Connect via DNS records」分頁，把 A 記錄的值（主機 IP）記到 `deployment-info.md`，然後按右上角 × 離開。
+   ✔ 驗證：Billing → Subscriptions 那筆 Premium 底下顯示 `你的網域.com`，Manage 面板的 Status 是 **Active**。
+
+   ⚠️ **關閉自動續約（尚未完成）**：右上角人像圖示 → **Billing** → **Subscriptions** → Premium 那筆按 **Manage**。實測 Status 變成 Active 之後，面板裡還是**沒有自動續約開關**，只有「Cancel subscription」（黑色的「Renew」是立刻付款續約，不要按）。
+   - 按 **Cancel subscription**：過程中會問原因、推挽留優惠，一律拒絕，一定要選「**到期後才取消**」（關閉自動續約、可以用到到期日），**不要選「立即取消」**，否則主機會馬上停用。
+   - 沒把握的話，先問線上客服：「I want to turn off auto-renewal but keep using the plan until the expiration date. How do I do that?」
+   - 在行事曆設一個到期日前一週的提醒，到期日前一定要處理。
+   ✔ 驗證：Billing → Subscriptions 那筆 Premium 的 Billing date 從「Auto-renews」變成「Expires」（或類似字樣），Manage 面板不再顯示「Subscription renews automatically」；`deployment-info.md` 對應的子項目打勾。
 
 ### 1-3　本機：準備正式版（改用 MySQL）
 
