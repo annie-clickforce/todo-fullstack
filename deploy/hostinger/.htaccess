@@ -1,0 +1,15 @@
+<IfModule mod_negotiation.c>
+    Options -MultiViews -Indexes
+</IfModule>
+
+RewriteEngine On
+
+# /api/... 與 /sanctum/... 交給 Laravel
+RewriteRule ^(api|sanctum)(/.*)?$ laravel.php [L]
+
+# 實際存在的檔案（js、css、圖片）直接回傳
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# 其他網址都回傳 index.html，交給 Vue Router 處理（例如直接打開 /login 或重新整理頁面）
+RewriteRule ^ index.html [L]

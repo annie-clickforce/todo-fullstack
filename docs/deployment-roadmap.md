@@ -294,11 +294,14 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
    `throttle:5,1,login` 的意思是「同一個 IP 每 1 分鐘最多 5 次，計數器名稱叫 login」。第三個參數不能省略：沒加的話，Laravel 會用「網域＋IP」當計數的 key，註冊和登入就會**共用同一個計數器**（例如註冊 3 次後只剩 2 次可以登入）。
    ✔ 驗證：本機開發版連續用錯誤密碼登入 6 次，前 5 次回 `401`，第 6 次回傳 `429 Too Many Requests`（前端畫面會顯示「Too Many Attempts.」）；這時註冊不受影響。等一分鐘後又可以登入。
    > 如果畫面顯示的是「Request failed」而不是「Too Many Attempts.」：代表 Laravel 回了 HTML 錯誤頁，前端讀不到訊息。前端送請求時沒有帶 `Accept: application/json`，Laravel 遇到 429 這類錯誤就會回 HTML。已在 `backend-laravel/app/Exceptions/Handler.php` 覆寫 `shouldReturnJson()`，讓 `/api/*` 的錯誤一律回 JSON。
-9. 【本機】新增網站根目錄要用的兩個檔案，放在 `deploy/hostinger/`（進 git，等一下 SSH 上直接複製過去）：
+9. ✅️ 【本機】新增網站根目錄要用的兩個檔案，放在 `deploy/hostinger/`（進 git，等一下 SSH 上直接複製過去）：
 
    `deploy/hostinger/.htaccess`：
    ```apache
-   Options -MultiViews -Indexes
+   <IfModule mod_negotiation.c>
+       Options -MultiViews -Indexes
+   </IfModule>
+
    RewriteEngine On
 
    # /api/... 與 /sanctum/... 交給 Laravel
@@ -318,6 +321,10 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
    // 把請求交給放在網站根目錄外面的 Laravel，Laravel 程式碼與 .env 都不在網站根目錄裡
    require '__LARAVEL_PATH__/public/index.php';
    ```
+   （`Options` 包在 `<IfModule mod_negotiation.c>` 裡是比照 Laravel 官方 `.htaccess` 的寫法：有些共享主機不允許在 `.htaccess` 改某些 Options，包起來比較不會直接變成 500 錯誤。）
+
+   > 這兩個檔案已在本機用 Apache 容器模擬過 Hostinger 的結構（網站根目錄只放前端、`.htaccess`、`laravel.php`，Laravel 放在根目錄外面）：`/api/v1/health` 回 JSON、`/login`／`/register` 直接打開或重新整理都正常、`/.htaccess` 回 403、`/.env` 只回前端頁面，註冊 → 登入 → 新增／編輯／勾選／刪除 → 登出全部正常。
+
    然後把第 5～9 步的改動 commit 並 push 到 GitHub。
    ✔ 驗證：GitHub 網頁上看得到 `deploy/hostinger/.htaccess`、`deploy/hostinger/laravel.php`，以及改好的 migration。
 
