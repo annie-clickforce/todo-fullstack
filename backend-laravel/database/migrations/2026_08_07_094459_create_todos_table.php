@@ -21,10 +21,9 @@ class CreateTodosTable extends Migration
             $table->text('description')->nullable();
             $table->boolean('completed')->default(false);
             $table->timestampsTz();
-        });
 
-        DB::statement('ALTER TABLE todos ALTER COLUMN id SET DEFAULT gen_random_uuid()');
-        DB::statement('CREATE INDEX idx_todos_user_completed_created ON todos (user_id, completed, created_at DESC)');
+            $table->index(['user_id', 'completed', 'created_at'], 'idx_todos_user_completed_created');
+        });
     }
 
     /**

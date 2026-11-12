@@ -14,8 +14,6 @@ class CreateUsersTable extends Migration
      */
     public function up()
     {
-        DB::statement('CREATE EXTENSION IF NOT EXISTS pgcrypto');
-
         Schema::create('users', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name', 100);
@@ -23,8 +21,6 @@ class CreateUsersTable extends Migration
             $table->text('password_hash');
             $table->timestampsTz();
         });
-
-        DB::statement('ALTER TABLE users ALTER COLUMN id SET DEFAULT gen_random_uuid()');
     }
 
     /**
