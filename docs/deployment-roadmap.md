@@ -49,7 +49,7 @@ SSH 登入後，要把文件中的指令貼進去時：先在文件中複製，�
 
 > **費用規劃**
 > - 網域：已在 GoDaddy 購買 1 年，記得關閉自動續約。
-> - 主機：Hostinger 共享主機，**選有 SSH 的最便宜方案**（見第 3 步），只買 1 年、關閉自動續約，加購一律不買。注意續約價通常比首年貴很多。
+> - 主機：Hostinger 共享主機 **Premium 方案**（目前最便宜、且有 SSH 的方案，見第 3 步），只買 12 個月、關閉自動續約，加購一律不買。注意續約價通常比首年貴很多。
 > - HTTPS：hPanel 內建免費憑證，不用另外買。
 > - 實際價格與方案內容以購買當下的 Hostinger 官網為準。
 
@@ -116,11 +116,14 @@ Laravel 程式碼放在家目錄 `~/todo-fullstack`，**不在網站根目錄裡
 
 ### 1-2　買 Hostinger 主機方案
 
-3. 【網頁】到 Hostinger 官網，打開共享主機（Web Hosting）的**方案比較表**，選方案：
-   - **一定要有「SSH access」**：Laravel 上線要執行 `composer install`、`php artisan migrate`，沒有 SSH 很難部署。最便宜的那一級可能沒有 SSH，有的話選最便宜的，沒有就選有 SSH 的最便宜那一級。看不出來就問線上客服：「這個方案有 SSH 嗎？可以用 Composer 和 Git 嗎？可以選 PHP 8.1 嗎？」
-   - 年限只選 **1 年**；結帳頁取消所有加購（網域、信箱、SSL 等——網域已經在 GoDaddy 買了，HTTPS 用免費的）。
-   - 買完到帳單設定把**自動續約關掉**。
-   ✔ 驗證：能登入 hPanel；方案頁面或比較表上確認有 SSH。
+3. 【網頁】到 Hostinger 官網 → 虛擬主機（Web Hosting），購買 **Premium** 方案：
+   - **買 Premium，不要買 Single**：Laravel 上線要用 SSH 執行 `composer install`、`php artisan migrate`，Hostinger 官方說明 SSH 只有 **Premium 以上**才有。目前官網上最便宜的就是 Premium；如果你看到的頁面有更便宜的 **Single**，那個沒有 SSH，不要買。
+   - **年限選 12 個月**：官網大字寫的最低價（例如 US$1.99／月）通常是**一次付 48 個月**的價格，選 12 個月每月會比較貴，但總共付的錢比較少。結帳頁會顯示實際金額，以那裡為準。
+   - 結帳頁取消所有加購（專業信箱、SSL、網站建置等）。HTTPS 用 hPanel 內建的免費憑證就好。
+   - Premium 附贈 1 年免費網域，但網域已經在 GoDaddy 買了，**不用領**，之後 hPanel 提示「領取免費網域」時跳過即可。
+   - 買完到 hPanel → 帳單，把**自動續約關掉**。
+   - 不確定時可以問右下角的線上客服：「Premium 方案有 SSH 嗎？可以用 Composer、Git，PHP 可以選 8.1 嗎？」
+   ✔ 驗證：能登入 hPanel；帳單頁看得到 Premium 方案與到期日，自動續約顯示關閉。方案名稱與到期日記到 `deployment-info.md`。
 4. 【網頁】hPanel 第一次登入時會跳出建立網站的引導，選「**我已經有網域**」（或「使用現有網域」），輸入 `你的網域.com`（主網域，不含 `todo.`）。如果引導要你選 WordPress 或網站建置工具，**跳過或選空白網站**，這個專案不需要。
    ✔ 驗證：hPanel 的網站列表看得到 `你的網域.com`。
 
@@ -128,18 +131,136 @@ Laravel 程式碼放在家目錄 `~/todo-fullstack`，**不在網站根目錄裡
 
 Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改成 MySQL，**在本機確認一切正常後**再上線。本機的資料都是測試資料，不用搬，換完重新註冊帳號即可。
 
-5. 【本機】修改 migration，拿掉 PostgreSQL 專用的寫法：
-   - `backend-laravel/database/migrations/` 裡的 users、todos、password_reset_tokens 三個 migration：刪掉 `CREATE EXTENSION pgcrypto` 和 `ALTER TABLE ... SET DEFAULT gen_random_uuid()` 這幾行（UUID 本來就由 Model 用 `Str::uuid()` 產生，不需要資料庫預設值）。
-   - todos 的 `CREATE INDEX ... created_at DESC` 改用 Laravel 寫法：`$table->index(['user_id', 'completed', 'created_at']);`。
-   - password_reset_tokens 的 `token_hash` 從 `text()` 改成 `string('token_hash', 64)`（MySQL 的 `TEXT` 欄位不能直接加 UNIQUE）。
-   ✔ 驗證：`grep -rn "pgcrypto\|gen_random_uuid" backend-laravel/database` 找不到任何結果。
-6. 【本機】本機開發環境換成 MySQL：
-   - `docker-compose.yml`：`db` 服務改用 `mysql:8.0` 映像檔，環境變數與 healthcheck 改成 MySQL 的寫法；`api` 的 `DB_CONNECTION` 改成 `mysql`、`DB_PORT` 改成 `3306`。
-   - `backend-laravel/Dockerfile`：PHP 擴充從 `pdo_pgsql pgsql` 改成 `pdo_mysql`，拿掉 `postgresql-dev`。
-   - `backend-laravel/.env.example`、根目錄 `.env.example`：改成 MySQL 的設定值。
-   ✔ 驗證：【本機】`docker compose down -v` 清掉舊的 PostgreSQL 資料後，`docker compose up --build` 能正常啟動，`docker compose exec api php artisan migrate` 成功。
-7. 【本機】在本機走一次完整流程：註冊 → 登入 → 新增／編輯／勾選／刪除 Todo → 登出。
-   ✔ 驗證：全部正常；用 DBeaver 連 `localhost:3306` 看得到 `users`、`todos` 的資料。
+5. 【本機】修改 3 個 migration，拿掉 PostgreSQL 專用的寫法。用 VS Code 打開下列檔案，把 `public function up()` 整段（從 `public function up()` 到它對應的 `}`）換成下面的內容，檔案其他部分不動：
+
+   `backend-laravel/database/migrations/2014_10_12_000000_create_users_table.php`：
+   ```php
+       public function up()
+       {
+           Schema::create('users', function (Blueprint $table) {
+               $table->uuid('id')->primary();
+               $table->string('name', 100);
+               $table->string('email', 255)->unique();
+               $table->text('password_hash');
+               $table->timestampsTz();
+           });
+       }
+   ```
+
+   `backend-laravel/database/migrations/2026_08_07_094459_create_todos_table.php`：
+   ```php
+       public function up()
+       {
+           Schema::create('todos', function (Blueprint $table) {
+               $table->uuid('id')->primary();
+               $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
+               $table->string('title', 255);
+               $table->text('description')->nullable();
+               $table->boolean('completed')->default(false);
+               $table->timestampsTz();
+
+               $table->index(['user_id', 'completed', 'created_at'], 'idx_todos_user_completed_created');
+           });
+       }
+   ```
+
+   `backend-laravel/database/migrations/2026_08_07_101738_create_password_reset_tokens_table.php`：
+   ```php
+       public function up()
+       {
+           Schema::create('password_reset_tokens', function (Blueprint $table) {
+               $table->uuid('id')->primary();
+               $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
+               $table->string('token_hash', 64)->unique();
+               $table->timestampTz('expires_at');
+               $table->timestampTz('used_at')->nullable();
+               $table->timestampTz('created_at')->useCurrent();
+           });
+       }
+   ```
+   改了什麼、為什麼：
+   - 刪掉 `CREATE EXTENSION pgcrypto` 和 `SET DEFAULT gen_random_uuid()`：這是 PostgreSQL 專用指令，MySQL 不認得。UUID 本來就由 Model 用 `Str::uuid()` 產生，不需要資料庫預設值。
+   - 索引改用 Laravel 的 `$table->index()`，MySQL 和 PostgreSQL 都能用。
+   - `token_hash` 從 `text` 改成 `string(64)`：MySQL 的 `TEXT` 欄位不能直接加 UNIQUE。
+   ✔ 驗證：【本機】執行下面指令，**沒有印出任何東西**（代表 PostgreSQL 專用寫法都拿掉了）：
+   ```powershell
+   Get-ChildItem backend-laravel\database\migrations | Select-String "pgcrypto|gen_random_uuid"
+   ```
+6. 【本機】把本機開發環境的資料庫換成 MySQL，共 4 個檔案：
+
+   **(1) `docker-compose.yml`**：
+   - `api` 服務的 `environment` 裡，資料庫那 6 行改成：
+     ```yaml
+           DB_CONNECTION: mysql
+           DB_HOST: db
+           DB_PORT: 3306
+           DB_DATABASE: ${MYSQL_DATABASE:-todo_app}
+           DB_USERNAME: ${MYSQL_USER:-todo_app}
+           DB_PASSWORD: ${MYSQL_PASSWORD:-change-me}
+     ```
+   - `db` 服務整段換成：
+     ```yaml
+       db:
+         image: mysql:8.0
+         ports:
+           - "${MYSQL_PORT:-3306}:3306"
+         environment:
+           MYSQL_DATABASE: ${MYSQL_DATABASE:-todo_app}
+           MYSQL_USER: ${MYSQL_USER:-todo_app}
+           MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change-me}
+           MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root-change-me}
+         volumes:
+           - mysql_data:/var/lib/mysql
+         healthcheck:
+           test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+           interval: 5s
+           timeout: 5s
+           retries: 20
+     ```
+   - 最下面的 `volumes:` 把 `postgres_data:` 改成 `mysql_data:`。
+
+   **(2) `backend-laravel/Dockerfile`**：`RUN` 那段換成（拿掉 `postgresql-dev`，PHP 擴充從 `pdo_pgsql pgsql` 改成 `pdo_mysql`）：
+   ```dockerfile
+   RUN apk add --no-cache \
+       oniguruma-dev \
+       libxml2-dev \
+       curl-dev \
+       && docker-php-ext-install pdo_mysql mbstring xml bcmath fileinfo curl
+   ```
+
+   **(3) 根目錄 `.env.example`**：開頭 4 行 `POSTGRES_...` 換成：
+   ```
+   MYSQL_DATABASE=todo_app
+   MYSQL_USER=todo_app
+   MYSQL_PASSWORD=change-me
+   MYSQL_ROOT_PASSWORD=root-change-me
+   MYSQL_PORT=3306
+   ```
+   你自己的根目錄 `.env`（不進 git）也要跟著更新。如果你沒有在裡面改過特別的值，直接重新複製一份最簡單：`Copy-Item .env.example .env`（會覆蓋原本的 `.env`）。
+
+   **(4) `backend-laravel/.env.example`**：`DB_` 開頭那 6 行換成：
+   ```
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=todo_app
+   DB_USERNAME=todo_app
+   DB_PASSWORD=change-me
+   ```
+   ✔ 驗證：【本機】依序執行：
+   ```powershell
+   docker compose down -v
+   docker compose up --build
+   ```
+   （`down -v` 會刪掉舊的 PostgreSQL 資料，裡面都是測試資料，沒關係。）等畫面不再快速捲動後，**另開一個 PowerShell 視窗**，在專案根目錄執行：
+   ```powershell
+   docker compose exec api php artisan migrate
+   ```
+   每個 migration 都顯示 `Migrated`，沒有紅色錯誤。
+7. 【本機】在本機走一次完整流程：打開 `http://localhost:3010`，註冊 → 登入 → 新增／編輯／勾選／刪除 Todo → 登出。
+   ✔ 驗證：全部正常；用 DBeaver 新增一個 **MySQL** 連線（主機 `localhost`、Port `3306`、資料庫 `todo_app`、帳號 `todo_app`、密碼 `change-me`），看得到 `users`、`todos` 裡剛剛建立的資料。
+   改完並確認正常後，`README.md` 技術列表中 MySQL 那行的「改用中」註記就可以拿掉；`docs/database.md`、`docs/architecture.md`、`CLAUDE.md` 裡寫 PostgreSQL 的地方也改成 MySQL。
+
 8. 【本機】幫登入、註冊加上速率限制，避免有人一直猜密碼（順便解掉 [roadmap.md](roadmap.md)「範圍之外」的速率限制項目）。在 `backend-laravel/routes/api.php` 把這兩行：
    ```php
    Route::post('/auth/register', [AuthController::class, 'register']);
@@ -206,7 +327,13 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
     git --version
     ```
     `php -v` 要顯示 `8.1.x`；三個指令都要有版本號。
-    接著設定變數（網址換成你的；路徑換成第 10 步記下的子網域資料夾，通常像 `~/domains/你的網域.com/public_html/todo`）：
+    接著先找出網站根目錄（子網域的資料夾）在哪裡：
+    ```bash
+    ls ~/domains
+    ls ~/domains/你的網域.com/public_html
+    ```
+    第一行應該看得到 `你的網域.com`；第二行應該看得到第 10 步建立的 `todo` 資料夾。如果找不到，到 hPanel → 檔案 → **檔案管理員（File Manager）** 找子網域的資料夾，對照它的路徑；再找不到就問客服「子網域 todo 的資料夾路徑是什麼」。
+    確認路徑後設定變數（網址換成你的；路徑換成剛剛確認的資料夾）：
     ```bash
     echo 'export APP_DOMAIN=todo.你的網域.com' >> ~/.bashrc
     echo 'export WEBROOT=~/domains/你的網域.com/public_html/todo' >> ~/.bashrc
@@ -220,9 +347,9 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
 15. 【SSH】把程式碼抓到家目錄（**不是**網站根目錄）：
     ```bash
     cd ~
-    git clone https://github.com/你的帳號/todo-fullstack.git
+    git clone https://github.com/annie-clickforce/todo-fullstack.git
     ```
-    如果 Repository 是 private，`git clone` 會要求登入：使用者名稱填 GitHub 帳號，密碼填 GitHub 的 **Personal Access Token**（GitHub → Settings → Developer settings → Personal access tokens 建立，權限只給這個 Repo 的 Contents 唯讀），不是 GitHub 密碼。
+    這個 Repository 是 public，不用登入就能下載。（如果之後改成 private，`git clone` 會要求登入，密碼要填 GitHub 的 Personal Access Token，不是 GitHub 密碼。）
     ✔ 驗證：`ls ~/todo-fullstack/backend-laravel` 看得到 `artisan`、`composer.json`。
 16. 【SSH】安裝套件並建立 `.env`：
     ```bash
@@ -283,6 +410,7 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
        ```powershell
        scp -P 65002 -r frontend\dist u123456789@你的主機IP:~/todo-dist
        ```
+       會要求輸入 SSH 密碼，輸入時畫面**不會顯示任何字**，打完直接按 Enter 就好，不是當掉。之後每次 `ssh`、`scp` 都一樣。
     2. 【SSH】刪掉網站根目錄舊的前端檔案，再把新的複製進去（`.htaccess`、`laravel.php` 不會被刪）：
        ```bash
        rm -rf $WEBROOT/assets $WEBROOT/index.html
