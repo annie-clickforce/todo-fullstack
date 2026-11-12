@@ -31,7 +31,8 @@
 - [API 規劃](docs/api.md)
 - [資料庫設計](docs/database.md)
 - [系統架構圖](docs/architecture.md)
-- [開發路線圖](docs/roadmap.md)（目前開發進度可看這份文件的打勾狀態）
+- [開發路線圖](docs/roadmap.md)
+- [部署上線與維運路線圖](docs/deployment-roadmap.md)（部署到 AWS、網域、HTTPS、Nginx，以及資料庫備份還原、看 log 除錯）
 
 ## 啟動專案
 
@@ -44,14 +45,12 @@
 
 ## 開發流程
 
-1. 文件與架構規劃
-2. 建立專案及 Docker 環境
-3. API 開發
-4. 前端畫面
-5. 前後端串接
-6. 測試
-7. Demo
-
-## 後續規劃
-
-- 後端改用 Laravel 8 重構，同一個 Repository 繼續進行（詳見 [開發路線圖](docs/roadmap.md) 第七階段）。
+1. ✅️ 文件與架構規劃
+2. ✅️ 建立專案及 Docker 環境
+3. ✅️ API 開發
+4. ✅️ 前端畫面
+5. ✅️ 前後端串接
+6. ✅️ 測試
+7. ✅️ Demo
+8. 部署上線
+9. 資料庫備份還原、看 log 除錯
