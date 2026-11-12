@@ -125,7 +125,7 @@ Laravel 程式碼放在家目錄 `~/todo-fullstack`，**不在網站根目錄裡
    - 結帳頁取消所有加購（專業信箱、SSL、網站建置等）。HTTPS 用 hPanel 內建的免費憑證就好。
    - **付款完成後還會出現加購推銷頁**（例如 Hostinger Agent AI 工具，按 Skip 之後還會再降價推一次，像「First month: $0.10」）。這些頁面寫著「Uses the payment method from your order. No forms, no second checkout.」，意思是**按「Add to my order」或「Claim」就會直接用剛剛的卡扣款**，而且之後自動續約。每一頁都只按卡片底下的灰色小字 **「Skip offer」**，直到出現「Order complete」頁，再按「Go to hPanel」。
    - Premium 附贈 1 年免費網域，但網域已經在 GoDaddy 買了，**不用領**，之後 hPanel 提示「領取免費網域」時跳過即可。hPanel 首頁的「Claim your free email」、「Claim your free email marketing plan」也不要按，領了可能多出會續約的訂閱。
-   - 不確定時可以問右下角的線上客服：「Premium 方案有 SSH 嗎？可以用 Composer、Git，PHP 可以選 8.1 嗎？」
+   - 不確定時可以問右下角的線上客服：「Premium 方案有 SSH 嗎？可以用 Composer、Git 嗎？」（PHP 版本不用問：Hostinger 目前最低是 8.2，第 12 步會說明）
    ✔ 驗證：信箱收到的收據只有 Premium 一項；hPanel 右上角人像圖示 → **Billing** → **Subscriptions** 只有一筆 **Premium Web Hosting**，沒有 Hostinger Agent、信箱之類的其他訂閱。方案名稱與到期日記到 `deployment-info.md`。（自動續約見第 4 步最後的 ⚠️ 項目。）
 4. ✅️ 【網頁】設定網站：hPanel → 右上角人像圖示 → **Billing** → **Subscriptions** → Premium 那筆旁邊黃色的 **Set up**（hPanel 第一次登入跳出的引導、首頁待辦的「Continue creating or migrating a website」也是同一個引導）。依序選：
    1. 問要「Continue setup」還是「Start over」：選 **Start over**，從頭確認每個選項。
@@ -340,10 +340,11 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
     - 還沒安裝：按免費 SSL 的安裝按鈕（付費 SSL 不要買）；裝好後如果 `http://` 沒有自動跳轉，再到同一頁那一列的「⋮」選單開啟「**強制 HTTPS（Force HTTPS）**」。
     - 主網域 `你的網域.com` 那一列可能一直顯示「Installing」或「wasn't installed」，上方也會有紅色提示要你按「Connect」：因為主網域沒有指到 Hostinger，正常，不用理它，也不要按「Connect」。
     ✔ 驗證：瀏覽器打開 `http://todo.你的網域.com` 會自動跳到 `https://`，網址列有鎖頭（這時頁面內容可能是 Hostinger 的預設頁，正常）。也可以【本機】執行 `curl -sI http://todo.你的網域.com`，看到 `301` 和 `Location: https://...`。
-12. 【網頁】設定 PHP 與資料庫：
-    1. hPanel → 進階 → **PHP 設定（PHP Configuration）**，PHP 版本選 **8.1**（Laravel 8 支援到 8.1）。
-    2. hPanel → 資料庫 → **MySQL 資料庫**，建立一個資料庫與使用者。Hostinger 會自動在名稱前面加前綴（像 `u123456789_todo`），**以畫面上顯示的完整名稱為準**。密碼用畫面上的產生器產生，存到自己的密碼管理工具（**不要**寫在 `deployment-info.md`）。
-    ✔ 驗證：PHP 設定頁顯示 8.1；資料庫列表看得到剛建立的資料庫，資料庫名稱、使用者名稱記到 `deployment-info.md`。
+12. ✅️ 【網頁】設定 PHP 與資料庫：
+    1. ✅️ PHP 版本：主網域的網站管理頁（Websites → 主網域卡片的 Manage site）→ 左邊選單 **Advanced → PHP Configuration** →「PHP version」分頁選 **8.2** → Update（切換要 1～2 分鐘）。子網域 `todo` 的資料夾在主網域的 `public_html` 底下，會跟著主網域的設定，不用另外改。
+       - 為什麼是 8.2：Laravel 8 官方只支援到 PHP 8.1，但 Hostinger 目前最低只能選 8.2（選項是 8.2～8.5，預設 8.3）。已在本機用 PHP 8.2、8.3 容器實測過：完整 API 流程（註冊、登入、Todo CRUD、使用者隔離、422／404）全部正常，沒有任何錯誤或 deprecation 警告，`composer check-platform-reqs --lock --no-dev` 也全部符合。選 8.2 是因為它跟本機開發用的 8.1 最接近。
+    2. ✅️ 資料庫：同一個網站管理頁 → 左邊選單 **Databases → Management**，在「Create a New MySQL Database And Database User」填 database name `todo`、username `todo`（左邊灰色的 `u123456789_` 前綴是自動加上的），密碼按密碼框右邊紫色的「•••」產生，存到自己的密碼管理工具（**不要**寫在 `deployment-info.md`），按 Create。下方「List of Current MySQL Databases And Users」會顯示完整名稱（像 `u123456789_todo`），**以畫面上顯示的為準**。
+    ✔ 驗證：PHP 設定頁顯示 8.2（也可以【本機】執行 `curl -sI https://todo.你的網域.com`，看到 `X-Powered-By: PHP/8.2.x`）；資料庫列表看得到剛建立的資料庫，資料庫名稱、使用者名稱記到 `deployment-info.md`。
 13. 【網頁＋本機】開啟 SSH 並登入：
     1. 【網頁】hPanel → 進階 → **SSH 存取（SSH Access）**，啟用 SSH。畫面會顯示 IP、Port（通常是 `65002`）、使用者名稱（像 `u123456789`），以及完整的登入指令。可以順便設定 SSH 密碼。
     2. 【本機】用畫面上的指令登入，格式像：
@@ -358,7 +359,7 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
     composer --version
     git --version
     ```
-    `php -v` 要顯示 `8.1.x`；三個指令都要有版本號。
+    `php -v` 要顯示 `8.2.x`（跟第 12 步選的版本一致）；三個指令都要有版本號。
     接著先找出網站根目錄（子網域的資料夾）在哪裡：
     ```bash
     ls ~/domains
@@ -609,7 +610,7 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
 |---|---|---|
 | SSH 一直沒反應，最後 `Connection timed out` | Port 打錯（不是 22），或 SSH 尚未啟用 | 確認指令有 `-p 65002`（以 hPanel 顯示的為準），到 hPanel 確認 SSH 已啟用 |
 | SSH 出現 `Permission denied` | 使用者名稱或密碼錯誤 | 使用者名稱用 hPanel SSH 頁顯示的（像 `u123456789`），密碼可在同一頁重設 |
-| `php -v` 不是 8.1 | SSH 的 PHP 版本跟網站設定不同步 | 確認第 12 步已選 8.1，登出再登入 SSH；仍不對就問 Hostinger 客服「SSH 怎麼用 PHP 8.1」 |
+| `php -v` 不是 8.2 | SSH 的 PHP 版本跟網站設定不同步 | 確認第 12 步已選 8.2，登出再登入 SSH；仍不對就問 Hostinger 客服「SSH 怎麼用 PHP 8.2」 |
 | `composer install` 出現 PHP 版本或擴充套件錯誤 | PHP 版本不對，或缺少擴充 | 先確認 `php -v`；缺擴充的話到 hPanel PHP 設定的擴充（Extensions）頁勾選 |
 | `git pull` 出現 `Your local changes ... would be overwritten` | 主機上改過被 git 管理的檔案 | `git status` 看是哪個檔案，用 `git checkout -- 檔名` 還原後再 `git pull` |
 | 打開網站看到 Hostinger 預設頁 | 預設首頁沒刪，或前端還沒上傳 | 重做第 18 步的 `rm` 與第 20 步 |
