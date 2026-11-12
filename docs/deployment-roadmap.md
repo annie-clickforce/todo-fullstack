@@ -328,7 +328,7 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
    然後把第 5～9 步的改動 commit 並 push 到 GitHub。
    ✔ 驗證：GitHub 網頁上看得到 `deploy/hostinger/.htaccess`、`deploy/hostinger/laravel.php`，以及改好的 migration。
 
-### 1-4　hPanel 設定：子網域、DNS、HTTPS、PHP、資料庫、SSH
+### ✅️ 1-4　hPanel 設定：子網域、DNS、HTTPS、PHP、資料庫、SSH
 
 10. ✅️ 【網頁】建立子網域並設定 DNS：
     1. 建立子網域：子網域不在 hPanel 最左邊的 Domains 裡，要先進網站的管理頁——左邊選單 **Websites** → 網站卡片下方的 **Manage site**（卡片上紅色的「Connect」、管理頁上的「Continue setup」都是改 Nameserver 的引導，不要按）→ 網站專屬選單的 **Domains → Subdomains**。Subdomain 填 `todo`、Domains 保持主網域，「Custom folder for subdomain」不用勾（預設就會建 `todo` 資料夾），按 Create。下方「List of Current Subdomains」會顯示資料夾路徑（像 `/home/u123456789/domains/你的網域.com/public_html/todo`），記到 `deployment-info.md`。
@@ -345,15 +345,15 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
        - 為什麼是 8.2：Laravel 8 官方只支援到 PHP 8.1，但 Hostinger 目前最低只能選 8.2（選項是 8.2～8.5，預設 8.3）。已在本機用 PHP 8.2、8.3 容器實測過：完整 API 流程（註冊、登入、Todo CRUD、使用者隔離、422／404）全部正常，沒有任何錯誤或 deprecation 警告，`composer check-platform-reqs --lock --no-dev` 也全部符合。選 8.2 是因為它跟本機開發用的 8.1 最接近。
     2. ✅️ 資料庫：同一個網站管理頁 → 左邊選單 **Databases → Management**，在「Create a New MySQL Database And Database User」填 database name `todo`、username `todo`（左邊灰色的 `u123456789_` 前綴是自動加上的），密碼按密碼框右邊紫色的「•••」產生，存到自己的密碼管理工具（**不要**寫在 `deployment-info.md`），按 Create。下方「List of Current MySQL Databases And Users」會顯示完整名稱（像 `u123456789_todo`），**以畫面上顯示的為準**。
     ✔ 驗證：PHP 設定頁顯示 8.2（也可以【本機】執行 `curl -sI https://todo.你的網域.com`，看到 `X-Powered-By: PHP/8.2.x`）；資料庫列表看得到剛建立的資料庫，資料庫名稱、使用者名稱記到 `deployment-info.md`。
-13. 【網頁＋本機】開啟 SSH 並登入：
-    1. 【網頁】hPanel → 進階 → **SSH 存取（SSH Access）**，啟用 SSH。畫面會顯示 IP、Port（通常是 `65002`）、使用者名稱（像 `u123456789`），以及完整的登入指令。可以順便設定 SSH 密碼。
-    2. 【本機】用畫面上的指令登入，格式像：
+13. ✅️ 【網頁＋本機】開啟 SSH 並登入：
+    1. 【網頁】主網域的網站管理頁 → 左邊選單 **Advanced → SSH Access**，SSH status 顯示 INACTIVE 時按 **Enable**。啟用後「SSH details」會顯示 IP、Port（通常是 `65002`）、Username（像 `u123456789`，就是子網域資料夾路徑 `/home/` 後面那串），以及 Host key fingerprint（ED25519）。按最下面 Password 那列的 **Change** 設定 SSH 密碼，存到自己的密碼管理工具。把登入指令和 ED25519 指紋記到 `deployment-info.md`。
+    2. 【本機】開 PowerShell 登入：
        ```powershell
        ssh -p 65002 u123456789@你的主機IP
        ```
-       第一次會問 `Are you sure you want to continue connecting`，輸入 `yes`；接著輸入 SSH 密碼（輸入時畫面不會顯示任何字，是正常的）。
-    ✔ 驗證：登入成功，出現主機的命令列提示字元。完整登入指令記到 `deployment-info.md`。
-14. 【SSH】確認工具都在，並設定網址與網站根目錄變數：
+       第一次會顯示 `ED25519 key fingerprint is SHA256:...` 並問 `Are you sure you want to continue connecting`：**先核對這串指紋跟 hPanel 顯示的一樣**（確認連到的是自己的主機，不是被冒充的），一樣才輸入 `yes`；接著輸入 SSH 密碼（輸入時畫面不會顯示任何字，是正常的）。
+    ✔ 驗證：登入成功，看到 Hostinger 的 H 字標誌、「Welcome back!」，以及像 `[u123456789@my-kul-web2100 ~]$` 的命令列提示字元。完整登入指令記到 `deployment-info.md`。
+14. ✅️ 【SSH】確認工具都在，並設定網址與網站根目錄變數：
     ```bash
     php -v
     composer --version
@@ -370,10 +370,12 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
     ```bash
     echo 'export APP_DOMAIN=todo.你的網域.com' >> ~/.bashrc
     echo 'export WEBROOT=~/domains/你的網域.com/public_html/todo' >> ~/.bashrc
+    echo '[ -f ~/.bashrc ] && . ~/.bashrc' >> ~/.profile
     source ~/.bashrc
     ls $WEBROOT
     ```
-    ✔ 驗證：`echo $APP_DOMAIN` 印出正確網址；`ls $WEBROOT` 不報錯（裡面可能有 Hostinger 放的預設檔案）。登出再登入後 `echo $APP_DOMAIN` 仍然有值。
+    第三行是讓 SSH 登入時也會讀 `~/.bashrc`：Hostinger 的帳號沒有 `~/.bash_profile`，登入時只讀 `~/.profile`（裡面只有顯示 H 字標誌與「Welcome back」的程式），不加這行的話，變數在登出再登入後就會不見。**不要另外建立 `~/.bash_profile`**：建了之後登入時就不會再讀 `~/.profile`。
+    ✔ 驗證：`echo $APP_DOMAIN` 印出正確網址；`ls $WEBROOT` 不報錯（裡面可能有 Hostinger 放的預設首頁 `default.php`）。輸入 `exit` 登出、再 `ssh` 登入後，`echo $APP_DOMAIN; echo $WEBROOT` 仍然印出兩個值。
 
 ### 1-5　部署後端（Laravel）
 
