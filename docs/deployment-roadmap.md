@@ -144,7 +144,7 @@ Laravel 程式碼放在家目錄 `~/todo-fullstack`，**不在網站根目錄裡
    - 在行事曆設一個到期日前一週的提醒，到期日前一定要處理。
    ✔ 驗證：Billing → Subscriptions 那筆 Premium 的 Billing date 從「Auto-renews」變成「Expires」（或類似字樣），Manage 面板不再顯示「Subscription renews automatically」；`deployment-info.md` 對應的子項目打勾。
 
-### 1-3　本機：準備正式版（改用 MySQL）
+### ✅️ 1-3　本機：準備正式版（改用 MySQL）
 
 Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改成 MySQL，**在本機確認一切正常後**再上線。本機的資料都是測試資料，不用搬，換完重新註冊帳號即可。
 
