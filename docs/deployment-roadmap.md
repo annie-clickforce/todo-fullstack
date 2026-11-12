@@ -33,6 +33,8 @@ Node.js 只在 build 前端時以暫時容器使用（第 26 步），正式環�
 
 `todo.你的網域.com` 替換成實際網址；`你的彈性IP` 替換成第 16 步取得的 IP。
 
+> **網址只需要在主機上填一次**：第 24 步把網址填進主機的 `.env`（`APP_DOMAIN`），並設定成主機的 `$APP_DOMAIN` 變數。之後【主機】步驟中用到網址的地方（第 26 步 build 前端、第 28 步 Nginx 設定、第 31 步申請憑證）都直接使用 `$APP_DOMAIN`，**不需要手動替換**，避免漏改。只有【本機】與【網頁】步驟（例如 `nslookup`、瀏覽器開啟網站）需要自己輸入網址。
+
 遇到錯誤時，先查文件最後的「[常見錯誤速查](#常見錯誤速查)」。
 
 SSH 登入主機後，要把文件中的指令或設定內容貼進去時：先在文件中複製，再到 PowerShell 視窗**按滑鼠右鍵**即可貼上（不是 `Ctrl+V`）。在 `nano` 編輯器裡也是按右鍵貼上。
@@ -97,7 +99,8 @@ AWS EC2 主機（Security Group 只開 22／80／443）
    - 年限只選 **1 年**。
    - 結帳頁取消所有加購（SSL 憑證、專業信箱、網站建置等）；網域隱私保護如果是免費附贈就保留。
    - 買完到帳戶的網域設定裡，把**自動續約關掉**。
-   ✔ 驗證：GoDaddy「我的產品」裡看得到這個網域。
+   - **到信箱點驗證信**：新註冊的網域通常會寄一封「驗證網域聯絡人 email」的信（寄件者是 GoDaddy 或網域註冊管理機構，也檢查垃圾郵件匣）。期限內沒點，網域可能被暫停解析，屆時網站會突然打不開，而且跟主機、Nginx 都無關。
+   ✔ 驗證：GoDaddy「我的產品」裡看得到這個網域；驗證信已點擊確認，網域設定頁沒有出現「待驗證」之類的警告。
 2. 決定網址：建議用子網域 `todo.你的網域.com`，之後這個網域還能拿來放別的東西。把完整網址記下來，後面所有 `todo.你的網域.com` 都換成它。
    （DNS 設定要先拿到主機的 IP，所以放在第 17 步才做。）
 
@@ -242,12 +245,14 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     ✔ 驗證：右上角顯示「東京」。
 11. 【網頁】幫 root 帳號（註冊時用的那個 email）開啟 MFA（多重驗證）：右上角帳號名稱 → 安全憑證 → 指派 MFA，用手機的 Google Authenticator 掃 QR Code。
     ✔ 驗證：登出再登入，除了密碼還要輸入手機上的 6 位數字。
-12. 【網頁】建立一個 IAM 使用者給自己日常用（IAM → 使用者 → 建立使用者，權限先給 `AdministratorAccess`），之後都用這個帳號登入，root 帳號收起來不用。也幫這個使用者開 MFA。
+12. 【網頁】**仍用 root 帳號**處理帳單相關設定（AWS 預設不讓 IAM 使用者看帳單，就算給了 `AdministratorAccess` 也一樣，所以這一步要在建立 IAM 使用者之前、用 root 做）：
+    - 開放 IAM 使用者看帳單：右上角帳號名稱 →「帳戶」→ 找到「IAM 使用者和角色存取帳單資訊」→ 編輯 → 勾選「啟用 IAM 存取」→ 更新。之後用 IAM 使用者也能查看抵用金與費用。
+    - 設定預算警示：Billing → Budgets → 建立預算，選「成本預算」，金額填 US$5，警示寄到自己的 email。
+    ✔ 驗證：Budgets 列表看得到這筆預算。順便到 Billing 的 Free plan 頁面看剩多少抵用金、還有哪些任務可以做（做完會再送抵用金）。
+13. 【網頁】建立一個 IAM 使用者給自己日常用（IAM → 使用者 → 建立使用者，權限先給 `AdministratorAccess`），之後都用這個帳號登入，root 帳號收起來不用。也幫這個使用者開 MFA。
     （原因：root 權限大到可以關掉整個帳號，萬一密碼外洩後果最嚴重。）
     **IAM 使用者要用專屬的登入網址**，不能從一般的 AWS 登入頁用 email 登入。建立使用者完成時畫面會顯示「主控台登入 URL」（格式像 `https://帳號ID.signin.aws.amazon.com/console`），記下來或加入書籤；之後也可以在 IAM 主控台首頁找到。
-    ✔ 驗證：用這個網址，以 IAM 使用者登入主控台成功。
-13. 【網頁】設定預算警示：Billing → Budgets → 建立預算，選「成本預算」，金額填 US$5，警示寄到自己的 email。
-    ✔ 驗證：Budgets 列表看得到這筆預算。順便到 Billing 的 Free plan 頁面看剩多少抵用金、還有哪些任務可以做（做完會再送抵用金）。
+    ✔ 驗證：用這個網址，以 IAM 使用者登入主控台成功；進入 Billing 頁面看得到費用資訊，沒有出現權限錯誤（有錯誤代表第 12 步的「啟用 IAM 存取」沒有設定成功）。
 
 ### 1-4　開一台主機（EC2）並連上它
 
@@ -343,7 +348,13 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     兩行輸出先複製到記事本。然後編輯 `.env`：`nano .env`，填好 `APP_DOMAIN`、`APP_KEY`、`POSTGRES_PASSWORD`。
     `nano`：`Ctrl+O` 存檔（再按 Enter），`Ctrl+X` 離開。
     存好後執行 `chmod 600 .env`，讓只有自己能讀。
-    ✔ 驗證：`cat .env`，三個欄位都有值，`APP_DOMAIN` 是你的網址（沒有 `https://`、沒有「你的網域」字樣）。
+    接著把 `.env` 裡的網址設定成主機的 `$APP_DOMAIN` 變數，之後的步驟會直接使用它（寫進 `~/.bashrc`，重新登入 SSH 後也會自動設定好）：
+    ```bash
+    echo 'export APP_DOMAIN=$(grep ^APP_DOMAIN= ~/todo-fullstack/.env | cut -d= -f2)' >> ~/.bashrc
+    source ~/.bashrc
+    echo "$APP_DOMAIN"
+    ```
+    ✔ 驗證：`cat .env`，三個欄位都有值，`APP_DOMAIN` 是你的網址（沒有 `https://`、沒有「你的網域」字樣）；最後一行 `echo` 印出的就是你的網址。之後如果要改網址，只改 `.env` 這一處，再執行 `source ~/.bashrc`。
 25. 【主機】啟動後端和資料庫，並建立資料表（因為 `.env` 裡有 `COMPOSE_FILE`，這裡的 `docker compose` 會自動用正式版設定檔）：
     ```bash
     docker compose up -d --build
@@ -356,14 +367,16 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     ```bash
     cd ~/todo-fullstack
     docker run --rm -v "$PWD/frontend":/app -w /app \
-      -e VITE_API_BASE_URL=https://todo.你的網域.com/api/v1 \
+      -e VITE_API_BASE_URL="https://$APP_DOMAIN/api/v1" \
       node:22-alpine sh -c "npm ci && npm run build"
     sudo mkdir -p /var/www/todo
+    sudo rm -rf /var/www/todo/*
     sudo cp -r frontend/dist/* /var/www/todo/
     ```
+    （`rm -rf` 那行是先清掉上一次部署的舊檔案：每次 build 產生的 js／css 檔名都不同，只用 `cp` 覆蓋的話舊檔案會一直堆積。路徑請照抄，**不要改成其他資料夾**，`rm -rf` 刪除的檔案無法復原。）
     > **網址為何不放在 `.env`**：`VITE_API_BASE_URL` 是在 build 的那一刻被「寫死」進前端 js 檔的，build 完之後前端就不會再讀任何環境變數。所以它只在 build 這一步有用，而且**網址改了就要重新 build**。另外 `frontend/src/api.js` 用 `new URL()` 解析這個值，一定要寫完整網址（含 `https://`），不能只寫 `/api/v1`。
 
-    ✔ 驗證：`ls /var/www/todo` 看得到 `index.html` 和 `assets`。
+    ✔ 驗證：`ls /var/www/todo` 看得到 `index.html` 和 `assets`；執行 `grep -oh "https://[^\"]*/api/v1" /var/www/todo/assets/*.js | head -1`，印出的網址是 `https://你的網址/api/v1`（確認網址有正確寫進前端）。
 
 ### 1-6　安裝並設定 Nginx
 
@@ -372,11 +385,11 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     sudo apt install -y nginx
     ```
     ✔ 驗證：【網頁】瀏覽器打開 `http://你的彈性IP`，看到「Welcome to nginx!」。
-28. 【主機】建立網站設定檔：`sudo nano /etc/nginx/sites-available/todo`，貼上以下內容（把 `todo.你的網域.com` 換成你的網址），存檔離開：
+28. 【主機】建立網站設定檔：`sudo nano /etc/nginx/sites-available/todo`，**原封不動**貼上以下內容（`YOUR_DOMAIN` 不用手動改，下一個指令會自動換掉），存檔離開：
     ```nginx
     server {
         listen 80;
-        server_name todo.你的網域.com;
+        server_name YOUR_DOMAIN;
 
         # 前端：build 好的檔案放在這裡
         root /var/www/todo;
@@ -398,7 +411,12 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     }
     ```
     最後一段 `try_files ... /index.html` 的原因：前端用的是 Vue Router 的 history 模式，使用者直接打開 `/todos` 這種網址時，主機上其實沒有這個檔案，要回傳 `index.html`，讓 Vue 自己決定顯示哪一頁。
-    ✔ 驗證：`sudo nginx -t` 顯示 `syntax is ok` 和 `test is successful`。
+    存檔後，用第 24 步設定的 `$APP_DOMAIN` 自動換掉 `YOUR_DOMAIN`：
+    ```bash
+    sudo sed -i "s/YOUR_DOMAIN/$APP_DOMAIN/" /etc/nginx/sites-available/todo
+    grep server_name /etc/nginx/sites-available/todo
+    ```
+    ✔ 驗證：`grep` 印出 `server_name 你的網址;`（不是 `YOUR_DOMAIN`）；`sudo nginx -t` 顯示 `syntax is ok` 和 `test is successful`。
 29. 【主機】啟用這個網站、停用預設的歡迎頁，再重新載入 Nginx：
     ```bash
     sudo ln -s /etc/nginx/sites-available/todo /etc/nginx/sites-enabled/
@@ -421,7 +439,7 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     ✔ 驗證：`certbot --version` 印出版本號。
 31. 【主機】申請憑證。**先確認第 17 步的 DNS 已經生效**（【本機】`nslookup todo.你的網域.com` 回傳你的彈性 IP），否則 Let's Encrypt 找不到你的主機，申請會失敗：
     ```bash
-    sudo certbot --nginx -d todo.你的網域.com
+    sudo certbot --nginx -d "$APP_DOMAIN"
     ```
     過程會問 email（憑證快過期時通知用）、同意服務條款。certbot 會自動修改第 28 步的 Nginx 設定，加上 443 和「http 自動轉到 https」。
     ✔ 驗證：
@@ -443,7 +461,13 @@ AWS EC2 主機（Security Group 只開 22／80／443）
     > **注意：https 下的登入流程尚未實際測試過。** 本機測試只能用 http，而正式版設定了 `SESSION_SECURE_COOKIE=true`（Cookie 只在 https 傳送），所以註冊／登入要到這一步才會第一次真正驗證。若出現 **419**（CSRF token mismatch）或登入後打 API 回 **401**，多半是網域設定不一致，依序檢查：
     > 1. 【主機】`cat .env`：`APP_DOMAIN` 必須跟瀏覽器網址列的網域**完全一致**——不含 `https://`、結尾沒有 `/`、沒有多餘空白。`SESSION_DOMAIN`、`SANCTUM_STATEFUL_DOMAINS`、`CORS_ORIGIN` 都是從它產生的，改這一個就好。
     > 2. 【主機】改過 `.env` 後要執行 `docker compose up -d`，讓 api 容器用新設定重新建立；只改檔案不會生效。可用 `docker compose exec api printenv SANCTUM_STATEFUL_DOMAINS` 確認容器內的值。
-    > 3. 【主機】確認第 26 步 build 前端時填的 `VITE_API_BASE_URL` 是 `https://` 開頭、網域相同。填錯要重做第 26 步（重新 build 並複製到 `/var/www/todo`）。
+    > 3. 【主機】一次檢查所有用到網址的地方，三行印出的網域都要一樣：
+    >    ```bash
+    >    echo "$APP_DOMAIN"
+    >    grep server_name /etc/nginx/sites-available/todo
+    >    grep -oh "https://[^\"]*/api/v1" /var/www/todo/assets/*.js | head -1
+    >    ```
+    >    第二行不對 → 重做第 28 步的 `sed`；第三行不對 → 重做第 26 步（重新 build 並複製到 `/var/www/todo`）。
     > 4. 【網頁】DevTools → Application → Cookies 刪除該網域的所有 Cookie，重新整理後再試一次，避免舊 Cookie 干擾。
     > 5. 【主機】仍然失敗時，看 Laravel log 找錯誤訊息（看法見第 48 步），並把錯誤訊息記下來排查。
 34. 【網頁】檢查 Cookie 的安全設定：DevTools → Application → Cookies → 選你的網域。
@@ -624,7 +648,10 @@ AWS EC2 主機（Security Group 只開 22／80／443）
 | 網站出現 502 Bad Gateway | api 容器沒有在執行 | `docker compose ps` 確認狀態，`docker compose logs api` 看原因，`docker compose up -d` 重新啟動 |
 | 網站出現 500 Server Error | Laravel 程式或設定出錯（常見是資料庫連線） | 看 Laravel log（第 48 步），找 `ERROR` 那幾行 |
 | 登入出現 419 或登入後 401 | 網域設定不一致 | 照第 33 步的排查清單檢查 |
+| Nginx 設定、前端、憑證的網址不一致（症狀不一：打開是別的網站、登入失敗、憑證錯誤） | 某一步的網址沒有正確帶入 | 照第 33 步排查清單第 3 點，一次檢查三個地方的網址 |
 | certbot 申請失敗 | DNS 尚未生效，或 80 port 沒開 | 【本機】`nslookup` 確認 IP 正確；確認安全群組有開 HTTP 80 |
 | 網站完全打不開（連不上） | DNS 尚未生效、安全群組沒開 80／443、Nginx 沒在執行 | 依序檢查 `nslookup`、安全群組、`sudo systemctl status nginx` |
+| 原本正常的網站突然打不開，`nslookup` 也查不到 IP | 網域聯絡人 email 沒驗證，網域被暫停解析 | 到 GoDaddy 網域設定頁看是否有驗證警告，到信箱找驗證信點擊（見第 1 步） |
+| IAM 使用者打開 Billing 出現權限錯誤 | 沒有開啟 IAM 存取帳單資訊 | 用 root 登入，照第 12 步開啟「IAM 使用者和角色存取帳單資訊」 |
 
 上表找不到的錯誤：把完整錯誤訊息複製下來，記錄當時執行的步驟與指令，再搜尋或詢問。
