@@ -132,4 +132,4 @@
 
 ## 新需求：完整上線
 
-部署上線（網域、HTTPS、Nginx）與上線後的資料庫備份還原、看 log 除錯，獨立拆成另一份路線圖，見 [deployment-roadmap.md](deployment-roadmap.md)。
+部署上線（網域、HTTPS）與上線後的資料庫備份還原、看 log 除錯，獨立拆成另一份路線圖，見 [deployment-roadmap.md](deployment-roadmap.md)（Hostinger 共享主機）。自己架伺服器的完整版本（AWS EC2、Docker、Nginx）是更正規的部署方式，目前先不採用，保留為備案，見 [deployment-roadmap-aws.md](deployment-roadmap-aws.md)。
