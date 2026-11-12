@@ -7,16 +7,6 @@
 
 前置條件：[roadmap.md](roadmap.md) 第七階段（Laravel 重構）已完成。跟 roadmap.md 一樣，建議一次只做一步，做完就照「✔ 驗證」實際確認，再進到下一步。
 
-## 部署資訊紀錄
-
-部署過程中有幾個值（網址、彈性 IP、IAM 登入網址、.pem 位置等）會在後面的步驟反覆用到。開始前先把範本 [deployment-info.example.md](deployment-info.example.md) 複製一份，命名為 `docs/deployment-info.md`，拿到值時就填在那份並打勾：
-
-```powershell
-Copy-Item docs\deployment-info.example.md docs\deployment-info.md
-```
-
-`deployment-info.md` 已加入 `.gitignore`，不會進 git，**請自行另外備份**。
-
 ## 部署的技術組成
 
 | 技術 | 正式環境中的角色 |
@@ -101,17 +91,27 @@ AWS EC2 主機（Security Group 只開 22／80／443）
 | 網址 | 前後端不同 port | 前後端同一個網域（Cookie 同源，CORS 問題最少） |
 | 錯誤畫面 | `APP_DEBUG=true`，會顯示詳細錯誤 | `APP_DEBUG=false`，不能讓外人看到程式細節 |
 
-### 1-1　先買網域
+### ✅️ 1-0　開始前：建立部署資訊紀錄
+
+部署過程中有幾個值（網址、彈性 IP、IAM 登入網址、.pem 位置等）會在後面的步驟反覆用到，先準備好一份紀錄檔，拿到值時就填進去，之後不用回頭翻找。
+
+0. ✅️ 【本機】把範本 [deployment-info.example.md](deployment-info.example.md) 複製一份，命名為 `docs/deployment-info.md`：
+   ```powershell
+   Copy-Item docs\deployment-info.example.md docs\deployment-info.md
+   ```
+   之後每拿到一個值，就填在 `deployment-info.md` 並打勾。`deployment-info.md` 已加入 `.gitignore`，不會進 git，**請自行另外備份**（換電腦或刪掉專案資料夾就會不見）。密碼類的值不要寫在裡面。
+   ✔ 驗證：`docs/deployment-info.md` 存在；執行 `git status` 看不到這個檔案（代表已被忽略，不會被 commit）。
+
+### ✅️ 1-1　先買網域
 
 先買的原因：後面準備設定檔時就會用到網址，先決定好比較不會亂。
 
-1. 【網頁】到 GoDaddy 搜尋並購買網域：
+1. ✅️ 【網頁】到 GoDaddy 搜尋並購買網域：
    - 年限只選 **1 年**。
    - 結帳頁取消所有加購（SSL 憑證、專業信箱、網站建置等）；網域隱私保護如果是免費附贈就保留。
-   - 買完到帳戶的網域設定裡，把**自動續約關掉**。
-   - **到信箱點驗證信**：新註冊的網域通常會寄一封「驗證網域聯絡人 email」的信（寄件者是 GoDaddy 或網域註冊管理機構，也檢查垃圾郵件匣）。期限內沒點，網域可能被暫停解析，屆時網站會突然打不開，而且跟主機、Nginx 都無關。
-   ✔ 驗證：GoDaddy「我的產品」裡看得到這個網域；驗證信已點擊確認，網域設定頁沒有出現「待驗證」之類的警告。
-2. 決定網址：建議用子網域 `todo.你的網域.com`，之後這個網域還能拿來放別的東西。把完整網址記下來，後面所有 `todo.你的網域.com` 都換成它。
+   - ⚠️ 買完到帳戶的網域設定裡，把**自動續約關掉**。
+   ✔ 驗證：GoDaddy「我的產品」裡看得到這個網域。
+2. ✅️ 決定網址：建議用子網域 `todo.你的網域.com`，之後這個網域還能拿來放別的東西。把完整網址記下來，後面所有 `todo.你的網域.com` 都換成它。
    （DNS 設定要先拿到主機的 IP，所以放在第 17 步才做。）
 
 ### 1-2　本機：準備正式版要用的檔案
@@ -661,7 +661,6 @@ AWS EC2 主機（Security Group 只開 22／80／443）
 | Nginx 設定、前端、憑證的網址不一致（症狀不一：打開是別的網站、登入失敗、憑證錯誤） | 某一步的網址沒有正確帶入 | 照第 33 步排查清單第 3 點，一次檢查三個地方的網址 |
 | certbot 申請失敗 | DNS 尚未生效，或 80 port 沒開 | 【本機】`nslookup` 確認 IP 正確；確認安全群組有開 HTTP 80 |
 | 網站完全打不開（連不上） | DNS 尚未生效、安全群組沒開 80／443、Nginx 沒在執行 | 依序檢查 `nslookup`、安全群組、`sudo systemctl status nginx` |
-| 原本正常的網站突然打不開，`nslookup` 也查不到 IP | 網域聯絡人 email 沒驗證，網域被暫停解析 | 到 GoDaddy 網域設定頁看是否有驗證警告，到信箱找驗證信點擊（見第 1 步） |
 | IAM 使用者打開 Billing 出現權限錯誤 | 沒有開啟 IAM 存取帳單資訊 | 用 root 登入，照第 12 步開啟「IAM 使用者和角色存取帳單資訊」 |
 
 上表找不到的錯誤：把完整錯誤訊息複製下來，記錄當時執行的步驟與指令，再搜尋或詢問。
