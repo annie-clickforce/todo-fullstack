@@ -148,7 +148,7 @@ Laravel 程式碼放在家目錄 `~/todo-fullstack`，**不在網站根目錄裡
 
 Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改成 MySQL，**在本機確認一切正常後**再上線。本機的資料都是測試資料，不用搬，換完重新註冊帳號即可。
 
-5. 【本機】修改 3 個 migration，拿掉 PostgreSQL 專用的寫法。用 VS Code 打開下列檔案，把 `public function up()` 整段（從 `public function up()` 到它對應的 `}`）換成下面的內容，檔案其他部分不動：
+5. ✅️ 【本機】修改 3 個 migration，拿掉 PostgreSQL 專用的寫法。用 VS Code 打開下列檔案，把 `public function up()` 整段（從 `public function up()` 到它對應的 `}`）換成下面的內容，檔案其他部分不動：
 
    `backend-laravel/database/migrations/2014_10_12_000000_create_users_table.php`：
    ```php
@@ -203,7 +203,9 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
    ```powershell
    Get-ChildItem backend-laravel\database\migrations | Select-String "pgcrypto|gen_random_uuid"
    ```
-6. 【本機】把本機開發環境的資料庫換成 MySQL，共 4 個檔案：
+6. ✅️ 【本機】把本機開發環境的資料庫換成 MySQL，共 4 個檔案。
+
+   **改檔案之前先執行一次** `docker compose down -v`，刪掉舊的 PostgreSQL 資料（都是測試資料）。一定要在改 `docker-compose.yml` **之前**做：改完之後 compose 檔裡已經沒有 `postgres_data`，`down -v` 就不會刪到它，舊資料卷會一直留在電腦裡。如果已經先改了，可以用 `docker volume rm todo-fullstack_postgres_data` 手動刪掉。
 
    **(1) `docker-compose.yml`**：
    - `api` 服務的 `environment` 裡，資料庫那 6 行改成：
@@ -264,18 +266,18 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
    DB_USERNAME=todo_app
    DB_PASSWORD=change-me
    ```
-   ✔ 驗證：【本機】依序執行：
+   **如果電腦上已經有其他程式佔用 3306**（例如別的專案的 MySQL 容器），啟動時會出現 `Bind for 0.0.0.0:3306 failed: port is already allocated`。不用關掉別的程式，在根目錄 `.env` 把 `MYSQL_PORT=3306` 改成 `MYSQL_PORT=3307` 就好（只影響從電腦連進資料庫的 port，例如 DBeaver；API 在容器內部一樣連 `db:3306`）。
+   ✔ 驗證：【本機】執行：
    ```powershell
-   docker compose down -v
    docker compose up --build
    ```
-   （`down -v` 會刪掉舊的 PostgreSQL 資料，裡面都是測試資料，沒關係。）等畫面不再快速捲動後，**另開一個 PowerShell 視窗**，在專案根目錄執行：
+   等畫面不再快速捲動後，**另開一個 PowerShell 視窗**，在專案根目錄執行：
    ```powershell
    docker compose exec api php artisan migrate
    ```
    每個 migration 都顯示 `Migrated`，沒有紅色錯誤。
-7. 【本機】在本機走一次完整流程：打開 `http://localhost:3010`，註冊 → 登入 → 新增／編輯／勾選／刪除 Todo → 登出。
-   ✔ 驗證：全部正常；用 DBeaver 新增一個 **MySQL** 連線（主機 `localhost`、Port `3306`、資料庫 `todo_app`、帳號 `todo_app`、密碼 `change-me`），看得到 `users`、`todos` 裡剛剛建立的資料。
+7. ✅️ 【本機】在本機走一次完整流程：打開 `http://localhost:3010`，註冊 → 登入 → 新增／編輯／勾選／刪除 Todo → 登出。
+   ✔ 驗證：全部正常；用 DBeaver 新增一個 **MySQL** 連線（主機 `localhost`、Port `3306`（如果第 6 步改過 `MYSQL_PORT`，就填改過的值，例如 `3307`）、資料庫 `todo_app`、帳號 `todo_app`、密碼 `change-me`），看得到 `users`、`todos` 裡剛剛建立的資料。
    改完並確認正常後，`README.md` 技術列表中 MySQL 那行的「改用中」註記就可以拿掉；`docs/database.md`、`docs/architecture.md`、`CLAUDE.md` 裡寫 PostgreSQL 的地方也改成 MySQL。
 
 8. 【本機】幫登入、註冊加上速率限制，避免有人一直猜密碼（順便解掉 [roadmap.md](roadmap.md)「範圍之外」的速率限制項目）。在 `backend-laravel/routes/api.php` 把這兩行：

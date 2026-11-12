@@ -7,7 +7,7 @@
 ## 專案範圍
 
 - 前後端分離：Vue 3 前端透過 REST API 與 Laravel 後端溝通。
-- 使用 MySQL 保存應用程式資料（目前程式仍是 PostgreSQL，改用中）。
+- 使用 MySQL 保存應用程式資料。
 - 提供註冊、登入、登出與 Todo CRUD。
 - 維護 API 文件、Markdown 文件與 Mermaid 架構圖。
 - 以 Docker Compose 啟動前端、後端與資料庫服務。
@@ -16,7 +16,7 @@
 
 - Vue 3
 - Laravel 8（PHP）
-- MySQL（改用中：目前程式仍是 PostgreSQL，見[部署路線圖](docs/deployment-roadmap.md)第 5～7 步）
+- MySQL 8
 - Docker（本機開發環境）
 - Hostinger 共享主機（正式環境）
 
@@ -44,10 +44,13 @@
 
 1. 複製環境變數範本：`cp .env.example .env`
 2. 啟動服務：`docker compose up --build`
-3. 開啟前端：`http://localhost:3010`
-4. 確認 API 健康檢查：`http://localhost:3011/api/v1/health`
+3. 建立資料表（第一次啟動或清掉資料後才需要）：另開一個終端機執行 `docker compose exec api php artisan migrate`
+4. 開啟前端：`http://localhost:3010`
+5. 確認 API 健康檢查：`http://localhost:3011/api/v1/health`
 
-停止服務時執行 `docker compose down`。若要連同 PostgreSQL 資料一併移除，執行 `docker compose down -v`。
+如果啟動時出現 `port is already allocated`（例如電腦上已有其他程式佔用 3306），在 `.env` 把 `MYSQL_PORT` 改成其他值（例如 `3307`）再重新啟動。
+
+停止服務時執行 `docker compose down`。若要連同 MySQL 資料一併移除，執行 `docker compose down -v`。
 
 ## 開發流程
 
