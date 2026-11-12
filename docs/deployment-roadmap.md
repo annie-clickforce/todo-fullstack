@@ -118,6 +118,17 @@ AWS EC2 主機（Security Group 只開 22／80／443）
 
 這一段是在本機寫好幾個新檔案，commit 推上 GitHub，等一下主機再把它們抓下來用。原本開發用的 `Dockerfile`、`docker-compose.yml` 都不動，正式版另外開新檔案。
 
+| 步驟 | 要做的事 | 怎麼驗證 | 要開畫面嗎？ |
+|---|---|---|---|
+| 1 | 新增 `backend-laravel/.dockerignore` | 確認檔案內容 | 不用 |
+| 2 | 新增 `backend-laravel/Dockerfile.prod` | `docker build` 成功、沒有 ERROR | 不用 |
+| 3 | 新增 `docker-compose.prod.yml` | （跟下一步一起驗） | 不用 |
+| 4 | 新增 `.env.production.example` | `docker compose ... config` 印出的 `APP_URL` 正確 | 不用 |
+| 5 | 在 `routes/api.php` 幫登入、註冊加上速率限制 | 連續登入失敗 6 次，第 6 次回 `429` | **要**，本機開發版要跑起來（`docker compose up`） |
+| 6 | commit、push | GitHub 上看得到這幾個新檔案 | 不用 |
+
+前四項只是新增設定檔，用指令驗證即可。正式版的畫面要到主機上設好 Nginx（第 29 步）才看得到，本機不需要另外架一次正式版。
+
 > **最容易卡住的地方**：整個部署流程中，`Dockerfile.prod`（第 4 步）、`docker-compose.prod.yml`（第 5 步）、Nginx 設定（第 28 步）這三個檔案最容易出錯，所以文件直接提供完整內容。這三份內容已在本機以 Docker 實際建置並測試過（映像檔建置、migration、透過 Nginx 存取 API 與前端路由、Sanctum CSRF Cookie 都正常）。建議先照抄跑通，之後再逐行對照註解理解每一段的用途；若自行修改後出錯，先改回文件內容確認是否為修改造成。
 
 3. 【本機】新增 `backend-laravel/.dockerignore`，告訴 Docker 打包時不要把這些東西放進去：
