@@ -7,24 +7,15 @@
 
 前置條件：[roadmap.md](roadmap.md) 第七階段（Laravel 重構）已完成。跟 roadmap.md 一樣，建議一次只做一步，做完就照「✔ 驗證」實際確認，再進到下一步。
 
-## 部署資訊紀錄（做到哪一步就填哪一格）
+## 部署資訊紀錄
 
-部署過程中有幾個值會在後面的步驟反覆用到，拿到時就填在這裡並打勾，之後不用回頭翻找。
+部署過程中有幾個值（網址、彈性 IP、IAM 登入網址、.pem 位置等）會在後面的步驟反覆用到。開始前先把範本 [deployment-info.example.md](deployment-info.example.md) 複製一份，命名為 `docs/deployment-info.md`，拿到值時就填在那份並打勾：
 
-> ⚠️ 這份文件會進 git，**密碼類的值（`APP_KEY`、`POSTGRES_PASSWORD`、AWS／GoDaddy 密碼）絕對不要寫在這裡**，它們只存在主機的 `.env` 或你自己的密碼管理工具裡。
+```powershell
+Copy-Item docs\deployment-info.example.md docs\deployment-info.md
+```
 
-- [ ] 正式網址（第 2 步）：實際為 `__________`（例如 `todo.example.com`，不含 `https://`）
-- [ ] 網域到期日（第 1 步）：實際為 `__________`（已關閉自動續約）
-- [ ] GoDaddy 網域聯絡人驗證信已點擊（第 1 步）
-- [ ] AWS Free plan 到期日（第 9 步，註冊日 + 6 個月）：實際為 `__________`（到期前要做完第 53 步收尾）
-- [ ] AWS 區域（第 10 步）：實際為 `__________`（建議 `ap-northeast-1` 東京）
-- [ ] IAM 使用者登入網址（第 13 步）：實際為 `__________`
-- [ ] .pem 金鑰檔存放位置（第 14 步）：實際為 `__________`（例如 `C:\Users\你的帳號\.ssh\todo-key.pem`），並已另外備份
-- [ ] EC2 執行個體名稱（第 14 步）：實際為 `__________`（預設 `todo-server`）
-- [ ] 彈性 IP（第 16 步）：實際為 `__________`
-- [ ] SSH 登入指令（第 18 步）：實際為 `ssh -i "__________" ubuntu@__________`
-- [ ] Let's Encrypt 通知 email（第 31 步）：實際為 `__________`
-- [ ] 主機 `.env` 的 `APP_KEY`、`POSTGRES_PASSWORD` 已產生並備份到密碼管理工具（第 24 步，值不要寫在這裡）
+`deployment-info.md` 已加入 `.gitignore`，不會進 git，**請自行另外備份**。
 
 ## 部署的技術組成
 

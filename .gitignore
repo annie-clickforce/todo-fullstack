@@ -4,3 +4,4 @@ dist/
 *.log
 CLAUDE.md
 
+docs/deployment-info.md
