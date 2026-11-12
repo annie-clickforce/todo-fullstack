@@ -334,9 +334,12 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
     1. 建立子網域：子網域不在 hPanel 最左邊的 Domains 裡，要先進網站的管理頁——左邊選單 **Websites** → 網站卡片下方的 **Manage site**（卡片上紅色的「Connect」、管理頁上的「Continue setup」都是改 Nameserver 的引導，不要按）→ 網站專屬選單的 **Domains → Subdomains**。Subdomain 填 `todo`、Domains 保持主網域，「Custom folder for subdomain」不用勾（預設就會建 `todo` 資料夾），按 Create。下方「List of Current Subdomains」會顯示資料夾路徑（像 `/home/u123456789/domains/你的網域.com/public_html/todo`），記到 `deployment-info.md`。
     2. 主機 IP：第 4 步建立網站時「Connect via DNS records」頁顯示的 A 記錄值就是主機 IP；如果當時沒記，也可以在 hPanel 的方案或網站資訊頁找 **IP address**。記到 `deployment-info.md`。
     3. 到 GoDaddy →「我的產品」→ 網域 → **DNS**（DNS 記錄分頁）→「新增記錄」：類型 `A`、名稱 `todo`、內容值填 `你的主機IP`、TTL 用預設，按「儲存」。原本就有的記錄（例如 `@` 的 Parked、NS 記錄）都不要動，也不要改 Nameserver。
-    ✔ 驗證：等幾分鐘到幾小時，【本機】執行 `nslookup todo.你的網域.com`，回傳的 Address 是 `你的主機IP`。剛查過時本機可能還留著「Non-existent domain」的舊快取，可以改用 `nslookup todo.你的網域.com 8.8.8.8`（指定 Google DNS）確認。
-11. 【網頁】設定 HTTPS（DNS 生效後才能申請）：hPanel → 安全性 → **SSL**，替 `todo.你的網域.com` 安裝免費 SSL；然後開啟「**強制 HTTPS（Force HTTPS）**」。
-    ✔ 驗證：瀏覽器打開 `http://todo.你的網域.com` 會自動跳到 `https://`，網址列有鎖頭（這時頁面內容可能是 Hostinger 的預設頁，正常）。
+    ✔ 驗證：等幾分鐘到幾小時，【本機】執行 `nslookup todo.你的網域.com`，回傳的 Address 是 `你的主機IP`。剛查過時本機可能還留著「Non-existent domain」的舊快取，可以改用 `nslookup todo.你的網域.com 8.8.8.8`（指定 Google DNS）確認。也可以在 GoDaddy DNS 記錄列表點那筆 `todo` 記錄「傳播」欄的地球圖示，打開「DNS 傳播情形檢查工具」，全球各地都顯示綠色勾勾就代表完全生效。
+11. ✅️ 【網頁】設定 HTTPS（DNS 生效後才能申請）：建好子網域後，hPanel 的 Websites 列表會多一張 `todo.你的網域.com` 的網站卡片（子網域被當成獨立網站管理）。進網站管理頁 → 左邊選單 **Security → SSL**，看 `todo.你的網域.com` 那一列：
+    - 已經是 **Active**：DNS 生效後 Hostinger 會自動安裝免費的 Lifetime SSL（Let's Encrypt，會自動續期），不用另外按。實測同時也已經會把 `http://` 301 跳轉到 `https://`，強制 HTTPS 不用另外開。
+    - 還沒安裝：按免費 SSL 的安裝按鈕（付費 SSL 不要買）；裝好後如果 `http://` 沒有自動跳轉，再到同一頁那一列的「⋮」選單開啟「**強制 HTTPS（Force HTTPS）**」。
+    - 主網域 `你的網域.com` 那一列可能一直顯示「Installing」或「wasn't installed」，上方也會有紅色提示要你按「Connect」：因為主網域沒有指到 Hostinger，正常，不用理它，也不要按「Connect」。
+    ✔ 驗證：瀏覽器打開 `http://todo.你的網域.com` 會自動跳到 `https://`，網址列有鎖頭（這時頁面內容可能是 Hostinger 的預設頁，正常）。也可以【本機】執行 `curl -sI http://todo.你的網域.com`，看到 `301` 和 `Location: https://...`。
 12. 【網頁】設定 PHP 與資料庫：
     1. hPanel → 進階 → **PHP 設定（PHP Configuration）**，PHP 版本選 **8.1**（Laravel 8 支援到 8.1）。
     2. hPanel → 資料庫 → **MySQL 資料庫**，建立一個資料庫與使用者。Hostinger 會自動在名稱前面加前綴（像 `u123456789_todo`），**以畫面上顯示的完整名稱為準**。密碼用畫面上的產生器產生，存到自己的密碼管理工具（**不要**寫在 `deployment-info.md`）。
