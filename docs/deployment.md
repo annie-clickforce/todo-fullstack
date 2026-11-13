@@ -151,7 +151,7 @@ ls -a $WEBROOT
 - `APP_DEBUG=false`：錯誤只回簡單訊息，不顯示檔案路徑或 stack trace。
 - `/.env`、`/.htaccess` 都回 `403`；`.env` 本來就不在網站根目錄裡。
 - 登入、註冊有速率限制：同一個 IP 每分鐘 5 次，第 6 次回 `429`。
-- 安全性 HTTP 標頭（2026-11-13 依安全檢測報告加入，設定在 `deploy/hostinger/.htaccess`）：HSTS、`X-Frame-Options: DENY`（防 clickjacking）、`X-Content-Type-Options: nosniff`、`Referrer-Policy`、只允許自身網域資源的 CSP，並移除 `X-Powered-By`。`Server: LiteSpeed`、`platform: hostinger`、`panel: hpanel` 推測是 Hostinger 主機層加的，`.htaccess` 可能移除不了（上線後確認）。
+- 安全性 HTTP 標頭（2026-11-13 依安全檢測報告加入，設定在 `deploy/hostinger/.htaccess`）：HSTS、`X-Frame-Options: DENY`（防 clickjacking）、`X-Content-Type-Options: nosniff`、`Referrer-Policy`、只允許自身網域資源的 CSP，並移除 `X-Powered-By`。2026-11-13 上線後實測：五個標頭都有出現在頁面、靜態檔與 API 回應，`X-Powered-By` 已消失，Hostinger 原本的 `Content-Security-Policy: upgrade-insecure-requests` 也被我們的 CSP 取代（`upgrade-insecure-requests` 已包含在內）。`Server: LiteSpeed`、`platform: hostinger`、`panel: hpanel` 仍然存在，推測是 Hostinger 主機層加的，尚未嘗試移除。
 
 ## 相關文件
 
