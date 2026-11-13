@@ -321,6 +321,8 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
    // 把請求交給放在網站根目錄外面的 Laravel，Laravel 程式碼與 .env 都不在網站根目錄裡
    require '__LARAVEL_PATH__/public/index.php';
    ```
+   > 上線後（2026-11-13）依安全檢測報告，在 `.htaccess` 加入了安全性 HTTP 標頭（HSTS、X-Frame-Options、CSP 等），上面是第一次部署時的版本，**最新內容以 repo 裡的 `deploy/hostinger/.htaccess` 為準**，說明見 [deployment.md](deployment.md)。
+
    （`Options` 包在 `<IfModule mod_negotiation.c>` 裡是比照 Laravel 官方 `.htaccess` 的寫法：有些共享主機不允許在 `.htaccess` 改某些 Options，包起來比較不會直接變成 500 錯誤。）
 
    > 這兩個檔案已在本機用 Apache 容器模擬過 Hostinger 的結構（網站根目錄只放前端、`.htaccess`、`laravel.php`，Laravel 放在根目錄外面）：`/api/v1/health` 回 JSON、`/login`／`/register` 直接打開或重新整理都正常、`/.htaccess` 回 403、`/.env` 只回前端頁面，註冊 → 登入 → 新增／編輯／勾選／刪除 → 登出全部正常。

@@ -2,6 +2,23 @@
     Options -MultiViews -Indexes
 </IfModule>
 
+# 安全性 HTTP 標頭（所有回應都會加上，包含前端頁面與 /api 的 JSON）
+<IfModule mod_headers.c>
+    # 強制瀏覽器之後一律用 HTTPS 連線（1 年）
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    # 禁止被其他網站用 iframe 嵌入，防止 clickjacking
+    Header always set X-Frame-Options "DENY"
+    # 禁止瀏覽器猜測檔案類型
+    Header always set X-Content-Type-Options "nosniff"
+    # 連到其他網站時只帶來源網域，不帶完整網址
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    # 只允許載入自己網域的資源；style 允許 inline（Vue 的 :style 綁定）、img 允許 data:（背景圖是 data URI 的 SVG）
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+    # 不洩漏 PHP 版本
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+</IfModule>
+
 RewriteEngine On
 
 # /api/... 與 /sanctum/... 交給 Laravel

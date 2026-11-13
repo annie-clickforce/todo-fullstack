@@ -85,7 +85,17 @@ php artisan migrate --force
 - 只有改到 `composer.json`／`composer.lock` 時才一定要跑 `composer install`；有新的 migration 時才一定要跑 `migrate`。不確定就全部跑，重複執行不會壞。
 - 後端改完不用重啟任何東西，下一個請求就會用新程式。
 
-### 3. 前端有改的話，重新 build 並上傳
+### 3. `deploy/hostinger/.htaccess` 有改的話，重新複製到網站根目錄
+
+網站實際讀的是 `$WEBROOT/.htaccess`（第一次部署時複製過去的），`git pull` 只會更新 `~/todo-fullstack` 裡的那份，**不會**自動更新網站根目錄：
+
+```bash
+cp ~/todo-fullstack/deploy/hostinger/.htaccess $WEBROOT/
+```
+
+`.htaccess` 寫錯會讓整個網站變成 500，複製後馬上打開網站確認；出問題時用 `cd ~/todo-fullstack && git log --oneline -- deploy/hostinger/.htaccess` 找上一版，`git show <commit>:deploy/hostinger/.htaccess > $WEBROOT/.htaccess` 還原。
+
+### 4. 前端有改的話，重新 build 並上傳
 
 【本機】build（不用在電腦上裝 Node）：
 
@@ -117,7 +127,7 @@ ls -a $WEBROOT
 
 `ls -a` 應該只看到 `.htaccess`、`assets`、`index.html`、`laravel.php`。
 
-### 4. 確認
+### 5. 確認
 
 - 【本機】`curl -s https://todo.annie-clickforce.xyz/api/v1/health` 回傳 `{"status":"ok"}`。
 - 【網頁】打開正式網址按 `Ctrl+Shift+R` 強制重新整理，登入後操作一次改到的功能。
@@ -141,6 +151,7 @@ ls -a $WEBROOT
 - `APP_DEBUG=false`：錯誤只回簡單訊息，不顯示檔案路徑或 stack trace。
 - `/.env`、`/.htaccess` 都回 `403`；`.env` 本來就不在網站根目錄裡。
 - 登入、註冊有速率限制：同一個 IP 每分鐘 5 次，第 6 次回 `429`。
+- 安全性 HTTP 標頭（2026-11-13 依安全檢測報告加入，設定在 `deploy/hostinger/.htaccess`）：HSTS、`X-Frame-Options: DENY`（防 clickjacking）、`X-Content-Type-Options: nosniff`、`Referrer-Policy`、只允許自身網域資源的 CSP，並移除 `X-Powered-By`。`Server: LiteSpeed`、`platform: hostinger`、`panel: hpanel` 推測是 Hostinger 主機層加的，`.htaccess` 可能移除不了（上線後確認）。
 
 ## 相關文件
 
