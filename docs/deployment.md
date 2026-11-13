@@ -2,57 +2,44 @@
 
 正式環境的現況、日常更新版本的步驟，以及第一次部署時踩過的坑。第一次從零部署的完整過程見 [deployment-roadmap.md](deployment-roadmap.md)。
 
-> **這份文件會進 git（Repository 是 public）**，所以主機 IP、SSH 使用者名稱等值一律用 `u123456789`、`你的主機IP` 代替，實際值記在 `docs/deployment-info.md`（已加入 `.gitignore`，只存在本機）。密碼不寫在任何文件裡。
+> **這份文件會進 git（Repository 是 public）**，只寫通用的步驟與觀念。正式環境的實際設定（主機 IP、SSH 帳號、資料庫名稱、網站根目錄路徑、`.env` 內容）一律不寫在這裡，記在 `docs/deployment-info.md`（已加入 `.gitignore`，只存在本機，請自行備份）。密碼不寫在任何文件裡。文件中的 `u123456789`、`你的主機IP`、`todo.你的網域.com` 都是代稱。
 
 ## 正式環境總覽
 
 | 項目 | 內容 |
 |---|---|
-| 正式網址 | https://todo.annie-clickforce.xyz |
-| 網域 | `annie-clickforce.xyz`，在 GoDaddy；DNS 留在 GoDaddy，只加一筆 `todo` 的 A 記錄指到 Hostinger |
-| 主機 | Hostinger 共享主機 Premium 方案（LiteSpeed），機房 Malaysia |
-| HTTPS | hPanel 自動安裝的免費 Lifetime SSL（Let's Encrypt，自動續期），`http://` 會 301 跳到 `https://` |
-| PHP | 8.2（hPanel 主網域 → Advanced → PHP Configuration；Hostinger 最低只能選 8.2） |
-| 資料庫 | MySQL，`u123456789_todo`（資料庫名稱與使用者名稱相同），只有主機內部連得到 |
-| 到期日 | 主機、網域的到期日與自動續約狀態見 `deployment-info.md` |
+| 主機 | Hostinger 共享主機（LiteSpeed），用 hPanel 管理 |
+| 網域與 DNS | 網域在 GoDaddy，DNS 留在 GoDaddy，只用一筆 A 記錄把子網域指到主機 |
+| HTTPS | hPanel 自動安裝的免費 SSL（Let's Encrypt，自動續期），`http://` 會 301 跳到 `https://` |
+| PHP | 8.2（Hostinger 最低只能選 8.2；Laravel 8 已實測相容） |
+| 資料庫 | MySQL，在 hPanel 建立，只有主機內部連得到 |
+| 實際設定值、到期日 | 見 `deployment-info.md`（不進 git） |
 
 ### 主機上的檔案配置
 
 ```
-~/                                         ← SSH 登入後的家目錄（/home/u123456789）
-├─ todo-fullstack/                         ← git clone 下來的整個專案（不在網站根目錄裡，外人下載不到）
+~/                                    ← SSH 登入後的家目錄
+├─ todo-fullstack/                    ← git clone 下來的整個專案（不在網站根目錄裡，外人下載不到）
 │   └─ backend-laravel/
-│       ├─ .env                            ← 正式版設定（權限 600，不進 git）
-│       └─ storage/logs/laravel-日期.log   ← Laravel log，每天一個檔、保留 14 天
-└─ domains/annie-clickforce.xyz/public_html/todo/   ← 網站根目錄（$WEBROOT）
+│       ├─ .env                       ← 正式版設定（權限 600，不進 git）
+│       └─ storage/logs/              ← Laravel log，每天一個檔、保留 14 天
+└─ （子網域的網站根目錄，$WEBROOT）
     ├─ .htaccess      ← /api、/sanctum 交給 laravel.php，其他交給 Vue
-    ├─ laravel.php    ← 一行 require，轉給 ~/todo-fullstack/backend-laravel/public/index.php
+    ├─ laravel.php    ← 一行 require，轉給家目錄裡的 Laravel
     ├─ index.html     ← 前端 build 出來的檔案
     └─ assets/        ← 前端 build 出來的 js、css（資料夾權限必須是 755）
 ```
 
-SSH 登入後可以直接用的變數（設定在 `~/.bashrc`，登入時由 `~/.profile` 載入）：
+SSH 登入後可以直接用 `$APP_DOMAIN`（正式網址）、`$WEBROOT`（網站根目錄）兩個變數，設定方式見 [deployment-roadmap.md](deployment-roadmap.md) 第 14 步。
 
-- `$APP_DOMAIN` = `todo.annie-clickforce.xyz`
-- `$WEBROOT` = `~/domains/annie-clickforce.xyz/public_html/todo`
+### 正式版 `.env` 的原則
 
-### 正式版 `.env` 的重點設定
+實際內容只存在主機上（權限 600），這裡只記要注意的原則：
 
-```
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://todo.annie-clickforce.xyz
-LOG_CHANNEL=daily
-DB_HOST=localhost
-DB_DATABASE=u123456789_todo
-DB_USERNAME=u123456789_todo
-SESSION_DOMAIN=todo.annie-clickforce.xyz
-SESSION_SECURE_COOKIE=true
-SANCTUM_STATEFUL_DOMAINS=todo.annie-clickforce.xyz
-CORS_ORIGIN=https://todo.annie-clickforce.xyz
-```
-
-`SESSION_DOMAIN`、`SANCTUM_STATEFUL_DOMAINS` 不含 `https://`；`APP_URL`、`CORS_ORIGIN` 要含。四個網址都要跟瀏覽器網址列完全一致，否則登入會出現 419／401。
+- `APP_ENV=production`、`APP_DEBUG=false`：出錯時不顯示程式細節。
+- `SESSION_SECURE_COOKIE=true`：Cookie 只在 HTTPS 下傳送。
+- `SESSION_DOMAIN`、`SANCTUM_STATEFUL_DOMAINS` 填網址本身（不含 `https://`）；`APP_URL`、`CORS_ORIGIN` 要含 `https://`。四個值都要跟瀏覽器網址列完全一致，否則登入會出現 419／401。
+- 要確認主機上的設定時，用不會印出密碼的指令：`grep -E "^(APP_|SESSION_|SANCTUM|CORS)" .env | grep -v KEY`。
 
 ## 登入主機
 
@@ -100,7 +87,7 @@ cp ~/todo-fullstack/deploy/hostinger/.htaccess $WEBROOT/
 【本機】build（不用在電腦上裝 Node）：
 
 ```powershell
-docker run --rm -v "${PWD}\frontend:/app" -v /app/node_modules -w /app -e VITE_API_BASE_URL=https://todo.annie-clickforce.xyz/api/v1 node:22-alpine sh -c "npm ci && npm run build"
+docker run --rm -v "${PWD}\frontend:/app" -v /app/node_modules -w /app -e VITE_API_BASE_URL=https://todo.你的網域.com/api/v1 node:22-alpine sh -c "npm ci && npm run build"
 ```
 
 【SSH】先確認主機上沒有上次留下的 `~/todo-dist`（有的話 `scp` 會多包一層）：
@@ -129,7 +116,7 @@ ls -a $WEBROOT
 
 ### 5. 確認
 
-- 【本機】`curl -s https://todo.annie-clickforce.xyz/api/v1/health` 回傳 `{"status":"ok"}`。
+- 【本機】`curl -s https://todo.你的網域.com/api/v1/health` 回傳 `{"status":"ok"}`。
 - 【網頁】打開正式網址按 `Ctrl+Shift+R` 強制重新整理，登入後操作一次改到的功能。
 
 ## 踩過的坑

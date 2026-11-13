@@ -354,7 +354,7 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
        ssh -p 65002 u123456789@你的主機IP
        ```
        第一次會顯示 `ED25519 key fingerprint is SHA256:...` 並問 `Are you sure you want to continue connecting`：**先核對這串指紋跟 hPanel 顯示的一樣**（確認連到的是自己的主機，不是被冒充的），一樣才輸入 `yes`；接著輸入 SSH 密碼（輸入時畫面不會顯示任何字，是正常的）。
-    ✔ 驗證：登入成功，看到 Hostinger 的 H 字標誌、「Welcome back!」，以及像 `[u123456789@my-kul-web2100 ~]$` 的命令列提示字元。完整登入指令記到 `deployment-info.md`。
+    ✔ 驗證：登入成功，看到 Hostinger 的 H 字標誌、「Welcome back!」，以及像 `[u123456789@主機名稱 ~]$` 的命令列提示字元。完整登入指令記到 `deployment-info.md`。
 14. ✅️ 【SSH】確認工具都在，並設定網址與網站根目錄變數：
     ```bash
     php -v
