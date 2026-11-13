@@ -59,6 +59,7 @@
 4. ✅️ 前端畫面
 5. ✅️ 前後端串接
 6. ✅️ 測試
-7. ✅️ Demo
-8. ✅️ 部署上線（見[部署上線與維運路線圖](docs/deployment-roadmap.md)、[部署文件](docs/deployment.md)）
-9. 資料庫備份還原、看 log 除錯
+7. ✅️ Demo（[v1](https://github.com/annie-clickforce/todo-fullstack/releases/tag/v1)）
+8. ✅️ 部署上線（[v2](https://github.com/annie-clickforce/todo-fullstack/releases/tag/v2)）
+9. ✅️ 上線後版本更新（[v3](https://github.com/annie-clickforce/todo-fullstack/releases/tag/v3)）
+10. 資料庫備份還原、看 log 除錯
