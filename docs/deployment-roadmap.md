@@ -377,7 +377,7 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
     第三行是讓 SSH 登入時也會讀 `~/.bashrc`：Hostinger 的帳號沒有 `~/.bash_profile`，登入時只讀 `~/.profile`（裡面只有顯示 H 字標誌與「Welcome back」的程式），不加這行的話，變數在登出再登入後就會不見。**不要另外建立 `~/.bash_profile`**：建了之後登入時就不會再讀 `~/.profile`。
     ✔ 驗證：`echo $APP_DOMAIN` 印出正確網址；`ls $WEBROOT` 不報錯（裡面可能有 Hostinger 放的預設首頁 `default.php`）。輸入 `exit` 登出、再 `ssh` 登入後，`echo $APP_DOMAIN; echo $WEBROOT` 仍然印出兩個值。
 
-### 1-5　部署後端（Laravel）
+### ✅️ 1-5　部署後端（Laravel）
 
 15. ✅️ 【SSH】把程式碼抓到家目錄（**不是**網站根目錄）：
     ```bash
@@ -461,7 +461,7 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
     ```
     ✔ 驗證：`cat` 印出的 `require` 路徑是完整路徑（像 `/home/u123456789/todo-fullstack/backend-laravel/public/index.php`），不再是 `__LARAVEL_PATH__`；【網頁】打開 `https://todo.你的網域.com/api/v1/health` 回傳 JSON。
 
-### 1-6　部署前端（Vue）
+### ✅️ 1-6　部署前端（Vue）
 
 19. ✅️ 【本機】build 前端。用暫時的 Node 容器 build，不用在電腦上另外裝 Node（網址換成你的）：
     ```powershell
@@ -487,9 +487,9 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
        `chmod 755` 不能省略：從 Windows `scp` 上傳的資料夾權限會變成 `drwx------`（700），Web Server 進不去 `assets`，會把 js、css 當成不存在而回傳 `index.html`，結果網站一片空白。可以用 `ls -ld $WEBROOT/assets` 確認是 `drwxr-xr-x`。
     ✔ 驗證：`ls -a` 看得到 `.htaccess`、`laravel.php`、`index.html`、`assets`；【網頁】打開 `https://todo.你的網域.com` 看到登入頁，直接打開 `https://todo.你的網域.com/register` 或在任何頁面重新整理也不會出現 404。
 
-### 1-7　上線驗收與安全檢查
+### ✅️ 1-7　上線驗收與安全檢查
 
-21. 【網頁】在正式網址走一次完整流程：註冊 → 登入 → 新增／編輯／勾選／刪除 Todo → 登出 → 重新整理頁面確認被導回登入頁。
+21. ✅️ 【網頁】在正式網址走一次完整流程：註冊 → 登入 → 新增／編輯／勾選／刪除 Todo → 登出 → 重新整理頁面確認被導回登入頁。
     ✔ 驗證：全部正常，DevTools（F12）的 Network 分頁沒有紅色的 419、401、500、CORS 錯誤。
     如果有某個功能不正常：【本機】用 `docker compose up` 啟動開發版，走一次同樣的流程。本機也壞 → 是程式本身的問題，跟部署無關；本機正常、只有正式網址壞 → 才是部署設定的問題，回頭檢查 `.env`、`.htaccess`。
 
@@ -498,23 +498,24 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
     > 2. 【SSH】前端打的網址也要一樣：`grep -oh "https://[^\"]*/api/v1" $WEBROOT/assets/*.js | head -1`。不對 → 重做第 19、20 步。
     > 3. 【網頁】DevTools → Application → Cookies 刪除該網域的所有 Cookie，重新整理後再試一次，避免舊 Cookie 干擾。
     > 4. 【SSH】仍然失敗時，看 Laravel log 找錯誤訊息（看法見第 33 步）。
-22. 【網頁】檢查 Cookie 的安全設定：DevTools → Application → Cookies → 選你的網域。
-    ✔ 驗證：`laravel_session` 的 `HttpOnly` 和 `Secure` 都有打勾；`XSRF-TOKEN` 的 `Secure` 有打勾。
-23. 【網頁】確認錯誤畫面不會洩漏程式細節：打開 `https://todo.你的網域.com/api/v1/不存在的路徑`。
+22. ✅️ 【網頁】檢查 Cookie 的安全設定：DevTools → Application → Cookies → 選你的網域。
+    ✔ 驗證：`todoapi_session` 的 `HttpOnly` 和 `Secure` 都有打勾；`XSRF-TOKEN` 的 `Secure` 有打勾。（Session Cookie 的名稱來自 `.env` 的 `APP_NAME=TodoAPI`，所以不是 Laravel 預設的 `laravel_session`。）
+    也可以【本機】執行 `curl -s -o NUL -D - https://todo.你的網域.com/sanctum/csrf-cookie | Select-String set-cookie`，看 `Set-Cookie` 的屬性：`todoapi_session` 有 `secure; httponly`，`XSRF-TOKEN` 有 `secure`（沒有 `httponly` 是正常的，前端要讀它來送 CSRF token）。
+23. ✅️ 【網頁】確認錯誤畫面不會洩漏程式細節：打開 `https://todo.你的網域.com/api/v1/不存在的路徑`。
     ✔ 驗證：只看到簡單的錯誤訊息，沒有檔案路徑、程式碼、stack trace。
-24. 【網頁】確認機密檔案下載不到：分別打開 `https://todo.你的網域.com/.env`、`https://todo.你的網域.com/.htaccess`。
+24. ✅️ 【網頁】確認機密檔案下載不到：分別打開 `https://todo.你的網域.com/.env`、`https://todo.你的網域.com/.htaccess`。
     ✔ 驗證：都**沒有**顯示檔案內容（顯示前端頁面、403 或 404 都可以）。`.env` 本來就不在網站根目錄裡，這一步是再次確認。
-25. 【本機】確認密碼沒有進 git：
+25. ✅️ 【本機】確認密碼沒有進 git：
     ```powershell
     git ls-files | Select-String "\.env"
     ```
     ✔ 驗證：只看到 `.env.example` 這類範本，沒有單獨一個 `.env`。
-26. 【網頁】在正式網址連續用錯誤密碼登入 6 次。
+26. ✅️ 【網頁】在正式網址連續用錯誤密碼登入 6 次。
     ✔ 驗證：第 6 次出現 `429`（第 8 步加的速率限制在正式環境也有效）。
 
-### 1-8　寫下部署文件
+### ✅️ 1-8　寫下部署文件
 
-27. 【本機】填寫 [deployment.md](deployment.md)（檔案已建立，目前為空白），記錄這次學到、之後會重複用到的東西（**不要寫密碼**）：
+27. ✅️ 【本機】填寫 [deployment.md](deployment.md)（檔案已建立，目前為空白），記錄這次學到、之後會重複用到的東西（**不要寫密碼**）：
     - 主機資訊：Hostinger 方案、網域、SSH 登入指令、網站根目錄路徑。
     - 「怎麼更新版本」的步驟：
       1. 【本機】改完程式、commit、push。

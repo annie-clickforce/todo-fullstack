@@ -1,33 +1,32 @@
 # Todo Full Stack
 
+🔗 線上網站：<https://todo.annie-clickforce.xyz/todos>　<sub>2026-11-13 上線</sub>
+
 ## 專案目的
 
-先理解前後端分離架構與運作流程，再透過 AI 協助完成 Todo List，學習 Full Stack 開發流程。
-
-## 專案範圍
-
-- 前後端分離：Vue 3 前端透過 REST API 與 Laravel 後端溝通。
-- 使用 MySQL 保存應用程式資料。
-- 提供註冊、登入、登出與 Todo CRUD。
-- 維護 API 文件、Markdown 文件與 Mermaid 架構圖。
-- 以 Docker Compose 啟動前端、後端與資料庫服務。
-
-## 技術
-
-- Vue 3
-- Laravel 8（PHP）
-- MySQL 8
-- Docker（本機開發環境）
-- Hostinger 共享主機（正式環境）
-
-更正規的自架方式（AWS EC2＋Docker＋Nginx）目前先不採用，保留為備案，見 [AWS 備案路線圖](docs/deployment-roadmap-aws.md)。
+以 Todo List 為題材，從零實作一個前後端分離的全端 Web 應用，完整走過需求規格、系統設計、開發、容器化，到正式部署與維運的軟體開發流程。
 
 ## 功能
 
-- 註冊
-- 登入
-- 登出
-- Todo CRUD
+- **帳號**：註冊、登入、登出。採用 Laravel Sanctum 的 SPA Cookie 認證，Session 存在 HTTP-only Cookie，密碼以 bcrypt 雜湊儲存。
+- **Todo 管理**：新增、列表、編輯、標記完成、刪除。每位使用者只能存取自己的 Todo，存取他人的資料一律回傳 `404`，不透露資料是否存在。
+- **安全性**：登入與註冊有速率限制（同一 IP 每分鐘 5 次）、CSRF 防護、正式環境強制 HTTPS 並關閉錯誤細節輸出。
+- **API 設計**：RESTful、JSON 格式、版本化路徑（`/api/v1`），錯誤回應格式統一為 `{ "message", "errors" }`。
+
+尚未納入目前範圍：忘記密碼／重設密碼（規格已寫在 [API 規劃](docs/api.md)，前端與寄信功能尚未完成）。
+
+## 技術架構
+
+| 層級 | 技術 | 說明 |
+|---|---|---|
+| 前端 | Vue 3、Vue Router、Vite | 單頁應用（SPA），build 成靜態檔部署 |
+| 後端 | Laravel 8（PHP 8.2）、Laravel Sanctum | REST API，流程為 Route → Controller → Eloquent Model |
+| 資料庫 | MySQL 8 | `utf8mb4`、UUID 主鍵，資料表由 Laravel migration 管理 |
+| 本機開發 | Docker Compose | 一個指令啟動前端、後端、資料庫三個服務 |
+| 正式環境 | Hostinger 共享主機（LiteSpeed）、Let's Encrypt | 自訂網域＋HTTPS，前後端同網域，避免跨站 Cookie 問題 |
+| 文件 | Markdown、Mermaid | API 規格、資料庫設計、架構圖、開發與部署路線圖 |
+
+更正規的自架方式（AWS EC2＋Docker＋Nginx）目前先不採用，保留為備案，見 [AWS 備案路線圖](docs/deployment-roadmap-aws.md)。
 
 ## 文件
 
@@ -61,5 +60,5 @@
 5. ✅️ 前後端串接
 6. ✅️ 測試
 7. ✅️ Demo
-8. 🚧 部署上線（進行中，見[部署上線與維運路線圖](docs/deployment-roadmap.md)）
+8. ✅️ 部署上線（見[部署上線與維運路線圖](docs/deployment-roadmap.md)、[部署文件](docs/deployment.md)）
 9. 資料庫備份還原、看 log 除錯
