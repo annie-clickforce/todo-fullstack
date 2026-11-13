@@ -63,3 +63,13 @@
 8. ✅️ 部署上線（[v2](https://github.com/annie-clickforce/todo-fullstack/releases/tag/v2)）
 9. ✅️ 上線後版本更新（[v3](https://github.com/annie-clickforce/todo-fullstack/releases/tag/v3)）
 10. 資料庫備份還原、看 log 除錯
+
+## 版本紀錄
+
+| 版本 | 日期 | 說明 |
+|---|---|---|
+| [v3](https://github.com/annie-clickforce/todo-fullstack/releases/tag/v3) | 2026-11-13 | 上線後版本更新：依安全檢測報告加入安全性 HTTP 標頭 |
+| [v2](https://github.com/annie-clickforce/todo-fullstack/releases/tag/v2) | 2026-11-13 | 部署上線：正式環境上線，啟用自訂網域與 HTTPS |
+| [v1](https://github.com/annie-clickforce/todo-fullstack/releases/tag/v1) | 2026-08-07 | Demo：後端以 Laravel 8 重構完成，提供註冊、登入、登出與 Todo CRUD，於本機 Docker 環境（PostgreSQL）運行 |
+
+<sub>日期為該版本程式碼完成的日期。v1 的版本號於 2026-11-12 補上。</sub>
