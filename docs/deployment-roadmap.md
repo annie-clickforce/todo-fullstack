@@ -379,22 +379,25 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
 
 ### 1-5　部署後端（Laravel）
 
-15. 【SSH】把程式碼抓到家目錄（**不是**網站根目錄）：
+15. ✅️ 【SSH】把程式碼抓到家目錄（**不是**網站根目錄）：
     ```bash
     cd ~
     git clone https://github.com/annie-clickforce/todo-fullstack.git
     ```
     這個 Repository 是 public，不用登入就能下載。（如果之後改成 private，`git clone` 會要求登入，密碼要填 GitHub 的 Personal Access Token，不是 GitHub 密碼。）
     ✔ 驗證：`ls ~/todo-fullstack/backend-laravel` 看得到 `artisan`、`composer.json`。
-16. 【SSH】安裝套件並建立 `.env`：
+16. ✅️ 【SSH】安裝套件並建立 `.env`：
     ```bash
     cd ~/todo-fullstack/backend-laravel
     composer install --no-dev --optimize-autoloader
+    php artisan package:discover --ansi
     cp .env.example .env
     php artisan key:generate
     chmod 600 .env
     nano .env
     ```
+    > `composer install` 最後會出現紅色的 `The Process class relies on proc_open, which is not available on your PHP installation.`，**這是正常的**：套件其實已經裝好、autoload 也產生了（看得到 `Generating optimized autoload files`），失敗的只是 Composer 最後自動執行的 `php artisan package:discover`——Composer 要用 `proc_open` 去啟動它，但 Hostinger 共享主機基於安全考量關掉了 `proc_open`。所以下一行自己手動執行 `php artisan package:discover --ansi`，看到 `Package manifest generated successfully.` 就代表完成。之後每次 `composer install` 都會這樣，照做即可。黃色的 `fruitcake/laravel-cors`、`swiftmailer` is abandoned 只是提醒套件已停止維護（Laravel 8 內建使用），不影響運作。
+
     在 `nano` 裡把以下幾個值改成正式版設定（沒列到的保持原樣；資料庫三個值用第 12 步建立的；網址換成你的）：
     ```
     APP_ENV=production
@@ -415,15 +418,41 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
     CORS_ORIGIN=https://todo.你的網域.com
     ```
     `Ctrl+O` → `Enter` 存檔，`Ctrl+X` 離開。（`APP_DEBUG=false`：出錯時不顯示程式細節；`LOG_CHANNEL=daily`：log 每天一個檔、保留 14 天；`SESSION_SECURE_COOKIE=true`：Cookie 只在 https 下傳送。）
-    ✔ 驗證：`grep -E "APP_ENV|APP_DEBUG|APP_KEY|DB_CONNECTION" .env` 印出 `production`、`false`、一串 `base64:` 開頭的值、`mysql`。
-17. 【SSH】建立資料表：
+
+    > **在 `nano` 一行一行改很容易打錯，實際做法是用 `sed` 一次改好密碼以外的值**（先在 `nano` 按 `Ctrl+X` 離開，問是否存檔按 `N`；`u123456789_todo` 換成第 12 步的資料庫名稱，網址用第 14 步設定的 `$APP_DOMAIN`，不用手動替換）：
+    > ```bash
+    > sed -i \
+    >   -e 's#^APP_ENV=.*#APP_ENV=production#' \
+    >   -e 's#^APP_DEBUG=.*#APP_DEBUG=false#' \
+    >   -e "s#^APP_URL=.*#APP_URL=https://$APP_DOMAIN#" \
+    >   -e 's#^LOG_CHANNEL=.*#LOG_CHANNEL=daily#' \
+    >   -e 's#^DB_HOST=.*#DB_HOST=localhost#' \
+    >   -e 's#^DB_DATABASE=.*#DB_DATABASE=u123456789_todo#' \
+    >   -e 's#^DB_USERNAME=.*#DB_USERNAME=u123456789_todo#' \
+    >   -e "s#^SESSION_DOMAIN=.*#SESSION_DOMAIN=$APP_DOMAIN\nSESSION_SECURE_COOKIE=true#" \
+    >   -e "s#^SANCTUM_STATEFUL_DOMAINS=.*#SANCTUM_STATEFUL_DOMAINS=$APP_DOMAIN#" \
+    >   -e "s#^CORS_ORIGIN=.*#CORS_ORIGIN=https://$APP_DOMAIN#" \
+    >   .env
+    > ```
+    > 接著 `nano .env` 只改密碼：方向鍵移到 `DB_PASSWORD=change-me` 那行 → `Ctrl+K` 剪掉整行 → 輸入 `DB_PASSWORD=你的密碼` 按 Enter → `Ctrl+O`、`Enter`、`Ctrl+X`。
+    >
+    > `APP_KEY` 不小心外流（例如截圖給別人看到）時，執行 `php artisan key:generate --force` 重新產生即可（影響只有所有人被登出）；`APP_KEY` 不需要另外備份，遺失時同樣重新產生。
+
+    ✔ 驗證（不會印出密碼與 `APP_KEY` 的值）：
+    ```bash
+    grep -E "^(APP_ENV|APP_DEBUG|APP_URL|LOG_CHANNEL|DB_|SESSION_|SANCTUM|CORS)" .env | grep -v PASSWORD
+    grep -q "^APP_KEY=base64:" .env && echo "APP_KEY OK"
+    ```
+    印出 `APP_ENV=production`、`APP_DEBUG=false`、`DB_DATABASE=u123456789_todo`、`SESSION_DOMAIN`／`SANCTUM_STATEFUL_DOMAINS` 是網址（不含 `https://`）、`APP_URL`／`CORS_ORIGIN` 是 `https://` 網址，以及 `APP_KEY OK`。
+17. ✅️ 【SSH】建立資料表：
     ```bash
     cd ~/todo-fullstack/backend-laravel
     php artisan migrate --force
     ```
     （`--force`：正式環境下 Laravel 會再問一次是否確定，加上它就不會停下來問。）
+    出現 `SQLSTATE[HY000] [1045] Access denied for user` 代表 `.env` 的 `DB_PASSWORD` 打錯：先用 `mysql -u u123456789_todo -p u123456789_todo -e "SELECT 1;"` 輸入密碼，確認密碼本身正確（印出 `1`），再 `nano .env` 修正 `DB_PASSWORD` 後重跑。密碼正確卻仍被拒時，可能是密碼含 `#`、`$`、空白等符號，改成 `DB_PASSWORD='密碼'`（單引號包起來）。
     ✔ 驗證：每個 migration 都顯示 `Migrated`；【網頁】hPanel → 資料庫 → phpMyAdmin 看得到 `users`、`todos` 等資料表。
-18. 【SSH】把 `.htaccess` 與 `laravel.php` 放進網站根目錄，並刪掉 Hostinger 的預設首頁：
+18. ✅️ 【SSH】把 `.htaccess` 與 `laravel.php` 放進網站根目錄，並刪掉 Hostinger 的預設首頁：
     ```bash
     cp ~/todo-fullstack/deploy/hostinger/.htaccess $WEBROOT/
     sed "s#__LARAVEL_PATH__#$HOME/todo-fullstack/backend-laravel#" ~/todo-fullstack/deploy/hostinger/laravel.php > $WEBROOT/laravel.php
@@ -434,25 +463,28 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
 
 ### 1-6　部署前端（Vue）
 
-19. 【本機】build 前端。用暫時的 Node 容器 build，不用在電腦上另外裝 Node（網址換成你的）：
+19. ✅️ 【本機】build 前端。用暫時的 Node 容器 build，不用在電腦上另外裝 Node（網址換成你的）：
     ```powershell
     docker run --rm -v "${PWD}\frontend:/app" -v /app/node_modules -w /app -e VITE_API_BASE_URL=https://todo.你的網域.com/api/v1 node:22-alpine sh -c "npm ci && npm run build"
     ```
     （`-v /app/node_modules`：套件裝在容器裡，不會寫進你電腦的 `frontend/node_modules`；`VITE_API_BASE_URL` 會在 build 時寫死進 js 檔，所以網址錯了要重新 build。）
     ✔ 驗證：`frontend\dist` 裡有 `index.html` 和 `assets` 資料夾；`Select-String -Path frontend\dist\assets\*.js -Pattern "todo.你的網域.com/api/v1"` 找得到結果。
-20. 【本機＋SSH】上傳到網站根目錄：
+20. ✅️ 【本機＋SSH】上傳到網站根目錄：
     1. 【本機】把 `dist` 資料夾傳到主機的家目錄（Port、使用者、IP 換成第 13 步的值）：
        ```powershell
        scp -P 65002 -r frontend\dist u123456789@你的主機IP:~/todo-dist
        ```
-       會要求輸入 SSH 密碼，輸入時畫面**不會顯示任何字**，打完直接按 Enter 就好，不是當掉。之後每次 `ssh`、`scp` 都一樣。
+       會要求輸入 SSH 密碼，輸入時畫面**不會顯示任何字**，打完直接按 Enter 就好，不是當掉。之後每次 `ssh`、`scp` 都一樣。注意 `scp` 的 `-P` 是**大寫**（`ssh` 是小寫 `-p`）；這行要在**本機**的 PowerShell 視窗執行，下面 2. 的指令才在 SSH 視窗執行（看命令列開頭：`PS C:\...>` 是本機，`[u123456789@...]$` 是 SSH）。
+       **`scp` 只跑一次**：主機上已經有 `~/todo-dist` 時再跑一次，`dist` 會被放進 `~/todo-dist/dist`，複製後網站根目錄會多出一個 `dist` 資料夾。萬一發生了，【SSH】`rm -rf $WEBROOT/dist` 刪掉即可。
     2. 【SSH】刪掉網站根目錄舊的前端檔案，再把新的複製進去（`.htaccess`、`laravel.php` 不會被刪）：
        ```bash
        rm -rf $WEBROOT/assets $WEBROOT/index.html
        cp -r ~/todo-dist/. $WEBROOT/
        rm -rf ~/todo-dist
+       chmod 755 $WEBROOT/assets
        ls -a $WEBROOT
        ```
+       `chmod 755` 不能省略：從 Windows `scp` 上傳的資料夾權限會變成 `drwx------`（700），Web Server 進不去 `assets`，會把 js、css 當成不存在而回傳 `index.html`，結果網站一片空白。可以用 `ls -ld $WEBROOT/assets` 確認是 `drwxr-xr-x`。
     ✔ 驗證：`ls -a` 看得到 `.htaccess`、`laravel.php`、`index.html`、`assets`；【網頁】打開 `https://todo.你的網域.com` 看到登入頁，直接打開 `https://todo.你的網域.com/register` 或在任何頁面重新整理也不會出現 404。
 
 ### 1-7　上線驗收與安全檢查
@@ -487,7 +519,7 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
     - 「怎麼更新版本」的步驟：
       1. 【本機】改完程式、commit、push。
       2. 【SSH】`cd ~/todo-fullstack && git pull`
-      3. 【SSH】`cd backend-laravel && composer install --no-dev --optimize-autoloader`
+      3. 【SSH】`cd backend-laravel && composer install --no-dev --optimize-autoloader`，接著 `php artisan package:discover --ansi`（`proc_open` 錯誤的原因見第 16 步）
       4. 【SSH】`php artisan migrate --force`
       5. 前端有改的話，重做第 19、20 步。
     - 這次踩過的坑和解法。
@@ -614,8 +646,10 @@ Hostinger 共享主機只有 MySQL，沒有 PostgreSQL，所以後端要先改�
 | SSH 出現 `Permission denied` | 使用者名稱或密碼錯誤 | 使用者名稱用 hPanel SSH 頁顯示的（像 `u123456789`），密碼可在同一頁重設 |
 | `php -v` 不是 8.2 | SSH 的 PHP 版本跟網站設定不同步 | 確認第 12 步已選 8.2，登出再登入 SSH；仍不對就問 Hostinger 客服「SSH 怎麼用 PHP 8.2」 |
 | `composer install` 出現 PHP 版本或擴充套件錯誤 | PHP 版本不對，或缺少擴充 | 先確認 `php -v`；缺擴充的話到 hPanel PHP 設定的擴充（Extensions）頁勾選 |
+| `composer install` 最後出現 `The Process class relies on proc_open, which is not available` | Hostinger 關掉了 `proc_open`，Composer 無法自動執行 `artisan package:discover`（套件其實已裝好） | 手動執行 `php artisan package:discover --ansi`（見第 16 步） |
 | `git pull` 出現 `Your local changes ... would be overwritten` | 主機上改過被 git 管理的檔案 | `git status` 看是哪個檔案，用 `git checkout -- 檔名` 還原後再 `git pull` |
 | 打開網站看到 Hostinger 預設頁 | 預設首頁沒刪，或前端還沒上傳 | 重做第 18 步的 `rm` 與第 20 步 |
+| 網站一片空白，DevTools 看到 js／css 回傳的是 HTML | `assets` 資料夾權限是 `drwx------`（從 Windows `scp` 上傳造成），Web Server 讀不到 | 【SSH】`chmod 755 $WEBROOT/assets`，瀏覽器按 `Ctrl+Shift+R` 強制重新整理 |
 | 重新整理頁面或直接打開 `/login` 出現 404 | `.htaccess` 沒放進網站根目錄 | `ls -a $WEBROOT` 確認有 `.htaccess`，沒有就重做第 18 步 |
 | `/api/...` 回傳 HTML 而不是 JSON | `laravel.php` 不在或路徑錯誤 | `cat $WEBROOT/laravel.php` 確認路徑正確，重做第 18 步 |
 | 網站出現 500 Server Error | Laravel 程式或設定出錯（常見是資料庫連線、`.env` 打錯） | 看 Laravel log（第 33 步），找 `ERROR` 那幾行 |
